@@ -4,6 +4,8 @@ set(HEADERS
 
 set(SRCS
     whapi.c
+    whstr.h
+    whstr.c
 )
 
 add_library(whapi_static STATIC)
@@ -19,6 +21,9 @@ target_include_directories(whapi_shared PUBLIC "${CMAKE_SOURCE_DIR}/include")
 
 target_link_libraries(whapi_static PRIVATE whapi_flags)
 target_link_libraries(whapi_shared PRIVATE whapi_flags)
+
+target_link_libraries(whapi_static PRIVATE curl)
+target_link_libraries(whapi_shared PRIVATE curl)
 
 target_sources(whapi_static PRIVATE ${HEADERS} ${SRCS})
 target_sources(whapi_shared PRIVATE ${HEADERS} ${SRCS})
