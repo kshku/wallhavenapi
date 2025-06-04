@@ -1,11 +1,21 @@
 set(HEADERS
     "${CMAKE_SOURCE_DIR}/include/whapi/whapi.h"
+    "${CMAKE_SOURCE_DIR}/include/whapi/whdef.h"
+    "${CMAKE_SOURCE_DIR}/include/whapi/whstr.h"
+    "${CMAKE_SOURCE_DIR}/include/whapi/whparsed.h"
+    "${CMAKE_SOURCE_DIR}/include/whapi/whraw.h"
+    "${CMAKE_SOURCE_DIR}/include/whapi/whrawfile.h"
+    "${CMAKE_SOURCE_DIR}/include/whapi/whcore.h"
 )
 
 set(SRCS
-    whapi.c
-    whstr.h
+    whcore.c
     whstr.c
+    whparsed.c
+    whraw.c
+    whrawfile.c
+    whcommon.h
+    whcommon.c
 )
 
 add_library(whapi_static STATIC)

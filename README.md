@@ -1,2 +1,2 @@
 # wallhavenapi
-WallhavenAPI implementation in C
+Wallhaven API client library in C
