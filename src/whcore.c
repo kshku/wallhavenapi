@@ -4,11 +4,14 @@
 
 #include "whcommon.h"
 
+static bool default_response_code_handler(unsigned int response_code);
+
 bool whapi_initialize(bool init_curl) {
     if (whapi.initialized) return false;
 
     whapi.error_code = 0;
     whapi.error_code_type = ERROR_CODE_TYPE_NONE;
+    whapi.retry = false;
 
     if (init_curl)
         CHECK_RETURN(whapi.error_code = curl_global_init(CURL_GLOBAL_ALL),
@@ -24,6 +27,8 @@ bool whapi_initialize(bool init_curl) {
                  false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
 
     whapi.apikey = whstr_create();
+
+    whapi.response_code_handler = default_response_code_handler;
 
     whapi.initialized = true;
 
@@ -63,4 +68,26 @@ void print_apikey(void) {
 void whapi_get_last_error_code(unsigned int *code, ErrorCodeType *type) {
     *code = whapi.error_code;
     *type = whapi.error_code_type;
+}
+
+void whapi_set_response_code_handler(response_code_handler handler) {
+    whapi.response_code_handler = handler;
+}
+
+static bool default_response_code_handler(unsigned int response_code) {
+    printf("Response code: %u\n", response_code);
+    switch (response_code) {
+        case 200:
+            // OK
+            return false;
+        case 401:
+            // Unauthorized access
+            break;
+        case 429:
+            // API call limit
+            return true;
+        default:
+            break;
+    }
+    return false;
 }

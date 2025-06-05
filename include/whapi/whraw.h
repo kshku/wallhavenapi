@@ -11,6 +11,18 @@
  * @param id The wallpaper id
  * @param res Pointer to whStr, where the response is written
  *
- * @return Returns false, on failure.
+ * @return Returns false on failure.
  */
 WH_API bool whapi_get_wallpaper_info_raw(const char *id, whStr *res);
+
+/**
+ * @brief Search.
+ *
+ * If apikey is set uses it.
+ *
+ * @param params SearchParameters
+ * @param resbuffer Pointer to whStr, where the response is written
+ *
+ * @return Returns false on failure.
+ */
+WH_API bool whapi_search_raw(SearchParameters params, whStr *res);

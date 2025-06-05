@@ -26,16 +26,46 @@ bool whapi_get_wallpaper_info_raw(const char *id, whStr *res) {
                      whapi.curl, CURLOPT_WRITEDATA, (void *)res),
                  false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
 
-#ifdef WH_DEBUG
-    char *path, buffer[4096];
-    path = buffer;
-    curl_url_get(whapi.url, CURLUPART_URL, &path, CURLU_URLDECODE);
-    printf("URL: %s\n", path);
-    // printf("CURLcode: %d\n", c);
-    // printf("Response code: %ld\n", response_code);
-#endif
+    whStr copy = whstr_create();
+    CHECKB_RETURN(whstr_setn(&copy, res->str, res->len), false,
+                  whstr_destroy(&copy));
 
-    curl_easy_perform(whapi.curl);
+    do {
+        CHECKB_RETURN(whstr_setn(res, copy.str, copy.len), false,
+                      whstr_destroy(&copy));
+        CHECKB_RETURN(perform_call(), false, whstr_destroy(&copy));
+    } while (whapi.retry);
+
+    whstr_destroy(&copy);
+
+    return true;
+}
+
+bool whapi_search_raw(SearchParameters params, whStr *res) {
+    assert(whapi.initialized);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECK_RETURN(whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                                 SEARCH_PATH, CURLU_URLENCODE),
+                 false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    if (whapi.apikey.str)
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+
+    CHECKB_RETURN(format_and_append_search_parameters(&params), false);
+
+    whStr copy = whstr_create();
+    CHECKB_RETURN(whstr_setn(&copy, res->str, res->len), false,
+                  whstr_destroy(&copy));
+
+    do {
+        CHECKB_RETURN(whstr_setn(res, copy.str, copy.len), false,
+                      whstr_destroy(&copy));
+        CHECKB_RETURN(perform_call(), false, whstr_destroy(&copy));
+    } while (whapi.retry);
+
+    whstr_destroy(&copy);
 
     return true;
 }

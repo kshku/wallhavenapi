@@ -42,5 +42,12 @@ WH_API bool whapi_set_apikey(const char *apikey);
  */
 WH_API void whapi_get_last_error_code(unsigned int *code, ErrorCodeType *type);
 
+/**
+ * @brief Set the response code handler.
+ *
+ * @param handler The response code handler
+ */
+WH_API void whapi_set_response_code_handler(response_code_handler handler);
+
 // Just for testing purpose
 WH_API void print_apikey(void);

@@ -51,6 +51,10 @@ typedef struct whAPI {
 
         unsigned int error_code;
         ErrorCodeType error_code_type;
+
+        response_code_handler response_code_handler;
+
+        bool retry;
 } whAPI;
 
 extern whAPI whapi;
@@ -64,3 +68,7 @@ bool reset_url(void);
 bool append_query(const char *key, const char *value);
 
 bool concat_and_set_path(const char *p, const char *q);
+
+bool perform_call(void);
+
+bool format_and_append_search_parameters(SearchParameters *params);
