@@ -4,16 +4,7 @@
 
 #include "whcommon.h"
 
-bool whapi_get_wallpaper_info_raw(const char *id, whStr *res) {
-    assert(whapi.initialized);
-
-    CHECKB_RETURN(reset_url(), false);
-
-    CHECKB_RETURN(concat_and_set_path(WALLPAPER_INFO_PATH, id), false);
-
-    // TODO: If failed to use apikey, warn
-    if (whapi.apikey.str) append_query("apikey", whapi.apikey.str);
-
+static bool perform_action(whStr *res) {
     CHECK_RETURN(whapi.error_code =
                      curl_easy_setopt(whapi.curl, CURLOPT_CURLU, whapi.url),
                  false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
@@ -41,6 +32,19 @@ bool whapi_get_wallpaper_info_raw(const char *id, whStr *res) {
     return true;
 }
 
+bool whapi_get_wallpaper_info_raw(const char *id, whStr *res) {
+    assert(whapi.initialized);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECKB_RETURN(concat_and_set_path(WALLPAPER_INFO_PATH, id), false);
+
+    // TODO: If failed to use apikey, warn
+    if (whapi.apikey.str) append_query("apikey", whapi.apikey.str);
+
+    return perform_action(res);
+}
+
 bool whapi_search_raw(SearchParameters params, whStr *res) {
     assert(whapi.initialized);
 
@@ -55,17 +59,32 @@ bool whapi_search_raw(SearchParameters params, whStr *res) {
 
     CHECKB_RETURN(format_and_append_search_parameters(&params), false);
 
-    whStr copy = whstr_create();
-    CHECKB_RETURN(whstr_setn(&copy, res->str, res->len), false,
-                  whstr_destroy(&copy));
+    return perform_action(res);
+}
 
-    do {
-        CHECKB_RETURN(whstr_setn(res, copy.str, copy.len), false,
-                      whstr_destroy(&copy));
-        CHECKB_RETURN(perform_call(), false, whstr_destroy(&copy));
-    } while (whapi.retry);
+bool whapi_get_tag_info_raw(const char *id, whStr *res) {
+    assert(whapi.initialized);
 
-    whstr_destroy(&copy);
+    CHECKB_RETURN(reset_url(), false);
 
-    return true;
+    CHECKB_RETURN(concat_and_set_path(TAG_INFO_PATH, id), false);
+
+    return perform_action(res);
+}
+
+bool whapi_get_settings_raw(whStr *res) {
+    assert(whapi.initialized);
+
+    CHECKP_RETURN(whapi.apikey.str, false);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECK_RETURN(
+        whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                        USER_SETTINGS_PATH, CURLU_URLENCODE),
+        false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+
+    return perform_action(res);
 }

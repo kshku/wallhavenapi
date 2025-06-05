@@ -18,24 +18,24 @@ int main(void) {
     whapi_set_apikey("XYZ");
 
     whapi_get_wallpaper_info_raw("gwjq3d", &temp);
-    printf("Response: %s\n", temp.str);
+    // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_search_raw(search_params, &temp);
-    printf("Response: %s\n", temp.str);
+    // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_set_apikey(NULL);
 
     whapi_get_wallpaper_info_raw("gwjq3d", &temp);
-    printf("Response: %s\n", temp.str);
+    // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_search_raw(search_params, &temp);
-    printf("Response: %s\n", temp.str);
+    // printf("Response: %s\n", temp.str);
 
     whstr_destroy(&temp);
 
