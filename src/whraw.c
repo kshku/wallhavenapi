@@ -88,3 +88,49 @@ bool whapi_get_settings_raw(whStr *res) {
 
     return perform_action(res);
 }
+
+bool whapi_get_collections_raw(const char *user_name, whStr *res) {
+    assert(whapi.initialized);
+
+    if (!user_name && !whapi.apikey.str) return false;
+
+    CHECKB_RETURN(reset_url(), false);
+
+    if (user_name) {
+        CHECKB_RETURN(concat_and_set_path(COLLECTIONS_PATH "/", user_name),
+                      false);
+    } else {
+        CHECK_RETURN(
+            whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                            COLLECTIONS_PATH, CURLU_URLENCODE),
+            false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+    }
+
+    return perform_action(res);
+}
+
+bool whapi_get_wallpapers_from_collection_raw(const char *user_name,
+                                              const char *id,
+                                              unsigned int purity, whStr *res) {
+    assert(whapi.initialized);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    whStr unid = whstr_create();
+
+    CHECKB_RETURN(whstr_set(&unid, user_name), false, whstr_destroy(&unid));
+    CHECKB_RETURN(whstr_setn(&unid, "/", 1), false, whstr_destroy(&unid));
+    CHECKB_RETURN(whstr_set(&unid, id), false, whstr_destroy(&unid));
+
+    CHECKB_RETURN(concat_and_set_path(COLLECTIONS_PATH "/", unid.str), false,
+                  whstr_destroy(&unid));
+
+    whstr_destroy(&unid);
+
+    if (whapi.apikey.str) append_query("apikey", whapi.apikey.str);
+
+    format_and_append_purity(purity);
+
+    return perform_action(res);
+}

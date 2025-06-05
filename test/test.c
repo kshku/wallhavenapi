@@ -27,6 +27,14 @@ int main(void) {
 
     whstr_clear(&temp);
 
+    whapi_get_collections_raw(NULL, &temp);
+
+    whstr_clear(&temp);
+
+    whapi_get_collections_raw("kshku", &temp);
+
+    whstr_clear(&temp);
+
     whapi_set_apikey(NULL);
 
     whapi_get_wallpaper_info_raw("gwjq3d", &temp);
@@ -36,6 +44,14 @@ int main(void) {
 
     whapi_search_raw(search_params, &temp);
     // printf("Response: %s\n", temp.str);
+
+    whstr_clear(&temp);
+
+    whapi_get_collections_raw(NULL, &temp);
+
+    whstr_clear(&temp);
+
+    whapi_get_collections_raw("kshku", &temp);
 
     whstr_destroy(&temp);
 

@@ -71,4 +71,6 @@ bool concat_and_set_path(const char *p, const char *q);
 
 bool perform_call(void);
 
-bool format_and_append_search_parameters(SearchParameters *params);
+bool format_and_append_search_parameters(const SearchParameters *params);
+
+bool format_and_append_purity(unsigned int purity);

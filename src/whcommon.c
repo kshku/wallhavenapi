@@ -88,7 +88,7 @@ bool perform_call(void) {
 }
 
 // TODO: Validating
-static bool format_and_append_q(Query *q) {
+static bool format_and_append_q(const Query *q) {
     whStr query = whstr_create();
 
     if (q->id) {
@@ -154,7 +154,7 @@ static bool format_and_append_categories(unsigned int categories) {
     return true;
 }
 
-static bool format_and_append_purity(unsigned int purity) {
+bool format_and_append_purity(unsigned int purity) {
     if (purity == 0) return true;
 
     if (purity & PURITY_NSFW) CHECKP_RETURN(whapi.apikey.str, false);
@@ -217,7 +217,7 @@ static bool format_and_append_atleast_resolution(Resolution res) {
     return true;
 }
 
-static bool format_and_append_exact_resolution(Resolution *res,
+static bool format_and_append_exact_resolution(const Resolution *res,
                                                unsigned int n) {
     if (n == 0) return true;
 
@@ -241,7 +241,7 @@ static bool format_and_append_exact_resolution(Resolution *res,
     return true;
 }
 
-static bool format_and_append_ratios(Ratio *ratios, unsigned int n) {
+static bool format_and_append_ratios(const Ratio *ratios, unsigned int n) {
     if (n == 0) return true;
 
     whStr ra = whstr_create();
@@ -263,7 +263,7 @@ static bool format_and_append_ratios(Ratio *ratios, unsigned int n) {
     return true;
 }
 
-static bool format_and_append_colors(Color *colors, unsigned int n) {
+static bool format_and_append_colors(const Color *colors, unsigned int n) {
     if (n == 0) return true;
 
     whStr col = whstr_create();
@@ -309,7 +309,7 @@ static bool format_and_append_seed(const char seed[7]) {
     return true;
 }
 
-bool format_and_append_search_parameters(SearchParameters *params) {
+bool format_and_append_search_parameters(const SearchParameters *params) {
     CHECKB_RETURN(format_and_append_q(&params->q), false);
 
     CHECKB_RETURN(format_and_append_categories(params->categories), false);
