@@ -4,6 +4,16 @@
 
 #include "whcommon.h"
 
+static size_t write_to_whstr(void *buffer, size_t size, size_t nmemb,
+                             void *userp) {
+    size_t realsize = size * nmemb;
+    whStr *r = (whStr *)userp;
+
+    CHECKB_RETURN(whstr_appendn(r, buffer, realsize), 0);
+
+    return realsize;
+}
+
 static bool setup_and_fetch_data(whStr *res) {
     CHECK_RETURN(whapi.error_code =
                      curl_easy_setopt(whapi.curl, CURLOPT_CURLU, whapi.url),

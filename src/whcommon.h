@@ -59,10 +59,6 @@ typedef struct whAPI {
 
 extern whAPI whapi;
 
-size_t write_to_whstr(void *buffer, size_t size, size_t nmemb, void *userp);
-
-size_t write_to_file(void *data, size_t size, size_t nmemb, void *clientp);
-
 bool reset_url(void);
 
 bool append_query(const char *key, const char *value);

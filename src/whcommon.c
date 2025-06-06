@@ -3,20 +3,6 @@
 // Global state
 whAPI whapi = {0};
 
-size_t write_to_whstr(void *buffer, size_t size, size_t nmemb, void *userp) {
-    size_t realsize = size * nmemb;
-    whStr *r = (whStr *)userp;
-
-    CHECKB_RETURN(whstr_appendn(r, buffer, realsize), 0);
-
-    return realsize;
-}
-
-size_t write_to_file(void *buffer, size_t size, size_t nmemb, void *userp) {
-    FILE *fp = (FILE *)userp;
-    return fwrite(buffer, size, nmemb, fp);
-}
-
 bool reset_url(void) {
     CHECK_RETURN(whapi.error_code = curl_url_set(
                      whapi.url, CURLUPART_URL, WALLHAVEN_URL, CURLU_URLENCODE),
@@ -29,11 +15,6 @@ bool append_query(const char *key, const char *value) {
     whStr query = whstr_create();
     CHECKB_RETURN(whstr_setf(&query, "%s=%s", key, value), false,
                   whstr_destroy(&query));
-
-    // CHECKB_RETURN(whstr_set(&query, key), false, whstr_destroy(&query));
-    // CHECKB_RETURN(whstr_appendn(&query, "=", 1), false,
-    // whstr_destroy(&query)); CHECKB_RETURN(whstr_append(&query, value), false,
-    // whstr_destroy(&query));
 
 #ifdef WH_DEBUG
     printf("Appending query: %s\n", query.str);
@@ -90,7 +71,6 @@ bool perform_call(void) {
     return true;
 }
 
-// TODO: Validating
 static bool format_and_append_q(const Query *q) {
     whStr query = whstr_create();
 
@@ -98,16 +78,14 @@ static bool format_and_append_q(const Query *q) {
         if ((q->like || q->tags || q->type != IMAGE_TYPE_NONE
              || q->user_name)) {
             whstr_destroy(&query);
+            whapi.error_code = WALLHAVEN_CANNOT_COMBINE_ID,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
             return false;
         }
 
         CHECKB_RETURN(whstr_setf(&query, "id:%s", q->id), false,
                       whstr_destroy(&query));
 
-        // CHECKB_RETURN(whstr_appendn(&query, "id:", 3), false,
-        //               whstr_destroy(&query));
-        // CHECKB_RETURN(whstr_append(&query, q->id), false,
-        //               whstr_destroy(&query));
     } else {
         if (q->tags)
             CHECKB_RETURN(whstr_set(&query, q->tags), false,
@@ -116,10 +94,6 @@ static bool format_and_append_q(const Query *q) {
         if (q->user_name) {
             CHECKB_RETURN(whstr_appendf(&query, " @%s", q->user_name), false,
                           whstr_destroy(&query));
-            // CHECKB_RETURN(whstr_appendn(&query, " @", 2), false,
-            //               whstr_destroy(&query));
-            // CHECKB_RETURN(whstr_append(&query, q->user_name), false,
-            //               whstr_destroy(&query));
         }
 
         if (q->type != IMAGE_TYPE_NONE) {
@@ -127,16 +101,11 @@ static bool format_and_append_q(const Query *q) {
                 whstr_appendf(&query, " type:%s",
                               q->type == IMAGE_TYPE_PNG ? "png" : "jpg"),
                 false, whstr_destroy(&query));
-            // CHECKB_RETURN(
-            //     whstr_append(&query, q->type == IMAGE_TYPE_PNG ? "png" :
-            //     "jpg"), false, whstr_destroy(&query));
         }
 
         if (q->like) {
             CHECKB_RETURN(whstr_appendf(&query, " like:%s", q->like), false,
                           whstr_destroy(&query));
-            // CHECKB_RETURN(whstr_append(&query, q->like), false,
-            //               whstr_destroy(&query));
         }
     }
 
@@ -167,7 +136,10 @@ static bool format_and_append_categories(unsigned int categories) {
 static bool format_and_append_purity(unsigned int purity) {
     if (purity == 0) return true;
 
-    if (purity & PURITY_NSFW) CHECKP_RETURN(whapi.apikey.str, false);
+    if (purity & PURITY_NSFW)
+        CHECKP_RETURN(whapi.apikey.str, false,
+                      whapi.error_code = WALLHAVEN_NO_API_KEY,
+                      whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
     char pur[4] = {0};
     for (int i = 2; i > -1; --i, purity >>= 1) pur[i] = (purity & 1) + '0';
@@ -203,7 +175,11 @@ static bool format_and_append_order(Order order) {
 static bool format_and_append_toprange(TopRange toprange, Sorting sorting) {
     if (toprange == TOPRANGE_NONE) return true;
 
-    if (sorting != SORTING_TOPLIST) return false;
+    if (sorting != SORTING_TOPLIST) {
+        whapi.error_code = WALLHAVEN_SORTING_MUST_BE_TOPLIST,
+        whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+        return false;
+    }
 
     char *top[] = {
         [TOPRANGE_1D] = "1d", [TOPRANGE_3D] = "3d", [TOPRANGE_1W] = "1w",
@@ -310,8 +286,11 @@ static bool format_and_append_seed(const char seed[7]) {
 
     for (int i = 0; seed[i]; ++i) {
         if ((seed[i] < 'a' || seed[i] > 'z') && (seed[i] < 'A' || seed[i] > 'Z')
-            && (seed[i] < '0' || seed[i] > '9'))
+            && (seed[i] < '0' || seed[i] > '9')) {
+            whapi.error_code = WALLHAVEN_INVALID_SEED,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
             return false;
+        }
     }
 
     CHECKB_RETURN(append_query("seed", seed), false);

@@ -18,40 +18,48 @@ int main(void) {
     whapi_set_apikey("XYZ");
 
     whapi_get_wallpaper_info_raw("gwjq3d", &temp);
+    whapi_get_wallpaper_info_raw_to_file("gwjq3d", "apiwallpaperinfo.json");
     // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_search_raw(search_params, &temp);
+    whapi_search_raw_to_file(search_params, "apisearch.json");
     // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_get_collections_raw(NULL, &temp);
+    whapi_get_collections_raw_to_file(NULL, "apicollections.json");
 
     whstr_clear(&temp);
 
     whapi_get_collections_raw("kshku", &temp);
+    whapi_get_collections_raw_to_file("kshku", "apicollectionsuser.json");
 
     whstr_clear(&temp);
 
     whapi_set_apikey(NULL);
 
     whapi_get_wallpaper_info_raw("gwjq3d", &temp);
+    whapi_get_wallpaper_info_raw_to_file("gwjq3d", "wallpaperinfo.json");
     // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_search_raw(search_params, &temp);
+    whapi_search_raw_to_file(search_params, "search.json");
     // printf("Response: %s\n", temp.str);
 
     whstr_clear(&temp);
 
     whapi_get_collections_raw(NULL, &temp);
+    whapi_get_collections_raw_to_file(NULL, "collections.json");
 
     whstr_clear(&temp);
 
     whapi_get_collections_raw("kshku", &temp);
+    whapi_get_collections_raw_to_file("kshku", "collectionsuser.json");
 
     whstr_destroy(&temp);
 
