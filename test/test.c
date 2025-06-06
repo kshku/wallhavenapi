@@ -56,4 +56,14 @@ int main(void) {
     whstr_destroy(&temp);
 
     whapi_shutdown();
+
+    whStr str = whstr_create();
+
+    whstr_setf(&str, "%dx%fy%u", -10, 0.52, 20);
+    printf("%s\n", str.str);
+
+    whstr_appendf(&str, "%s", "HAHAHAHAHHA");
+    printf("%s\n", str.str);
+
+    whstr_destroy(&str);
 }

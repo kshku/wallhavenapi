@@ -44,6 +44,19 @@ WH_API bool whstr_set(whStr *whstr, const char *str);
 WH_API bool whstr_setn(whStr *whstr, const char *str, size_t len);
 
 /**
+ * @brief Set the string of given length (Can call multiple times).
+ *
+ * This function will allocate memory as requried.
+ *
+ * @param whstr Pointer to whStr
+ * @param fmt The format
+ * @param ... Arguments
+ *
+ * @return Returns true if string is set, otherwise false.
+ */
+WH_API bool whstr_setf(whStr *whstr, const char *fmt, ...);
+
+/**
  * @brief Free the string.
  *
  * @param whstr Pointer to whStr.
@@ -74,6 +87,19 @@ WH_API bool whstr_append(whStr *whstr, const char *str);
  * @return Returns false on failure.
  */
 WH_API bool whstr_appendn(whStr *whstr, const char *str, size_t len);
+
+/**
+ * @brief Append string of given length.
+ *
+ * Allocation is handled.
+ *
+ * @param whstr Pointer to whStr
+ * @param fmt The format
+ * @param ... Arguments
+ *
+ * @return Returns false on failure.
+ */
+WH_API bool whstr_appendf(whStr *whstr, const char *fmt, ...);
 
 /**
  * @brief Clear the string.

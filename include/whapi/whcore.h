@@ -48,6 +48,3 @@ WH_API void whapi_get_last_error_code(unsigned int *code, ErrorCodeType *type);
  * @param handler The response code handler
  */
 WH_API void whapi_set_response_code_handler(response_code_handler handler);
-
-// Just for testing purpose
-WH_API void print_apikey(void);

@@ -7,20 +7,24 @@
 static bool default_response_code_handler(unsigned int response_code);
 
 bool whapi_initialize(bool init_curl) {
-    if (whapi.initialized) return false;
-
-    whapi.error_code = 0;
-    whapi.error_code_type = ERROR_CODE_TYPE_NONE;
-    whapi.retry = false;
+    if (whapi.initialized) {
+        whapi.error_code = WALLHAVEN_MULTIPLE_INITIALIZE,
+        whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+        return false;
+    }
 
     if (init_curl)
         CHECK_RETURN(whapi.error_code = curl_global_init(CURL_GLOBAL_ALL),
                      false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
     whapi.initialized_curl = init_curl;
 
-    CHECKP_RETURN(whapi.curl = curl_easy_init(), false);
+    CHECKP_RETURN(whapi.curl = curl_easy_init(), false,
+                  whapi.error_code = WALLHAVEN_CURL_INIT_FAILED,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
-    CHECKP_RETURN(whapi.url = curl_url(), false);
+    CHECKP_RETURN(whapi.url = curl_url(), false,
+                  whapi.error_code = WALLHAVEN_CURL_INIT_FAILED,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
     CHECK_RETURN(whapi.error_code = curl_url_set(
                      whapi.url, CURLUPART_URL, WALLHAVEN_URL, CURLU_URLENCODE),
@@ -31,6 +35,10 @@ bool whapi_initialize(bool init_curl) {
     whapi.response_code_handler = default_response_code_handler;
 
     whapi.initialized = true;
+
+    whapi.error_code = 0;
+    whapi.error_code_type = ERROR_CODE_TYPE_NONE;
+    whapi.retry = false;
 
     return true;
 }
@@ -58,13 +66,6 @@ bool whapi_set_apikey(const char *apikey) {
     return whstr_set(&whapi.apikey, apikey);
 }
 
-void print_apikey(void) {
-    assert(whapi.initialized);
-
-    if (whapi.apikey.str) printf("%s\n", whapi.apikey.str);
-    else printf("API key is not set\n");
-}
-
 void whapi_get_last_error_code(unsigned int *code, ErrorCodeType *type) {
     *code = whapi.error_code;
     *type = whapi.error_code_type;
@@ -82,7 +83,9 @@ static bool default_response_code_handler(unsigned int response_code) {
             return false;
         case 401:
             // Unauthorized access
-            break;
+            whapi.error_code = WALLHAVEN_NO_API_KEY,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+            return false;
         case 429:
             // API call limit
             return true;

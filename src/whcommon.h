@@ -71,6 +71,15 @@ bool concat_and_set_path(const char *p, const char *q);
 
 bool perform_call(void);
 
-bool format_and_append_search_parameters(const SearchParameters *params);
+bool setup_wallpaper_info_url(const char *id);
 
-bool format_and_append_purity(unsigned int purity);
+bool setup_search_url(const SearchParameters *params);
+
+bool setup_tag_info_url(const char *id);
+
+bool setup_settings_url(void);
+
+bool setup_collections_url(const char *user_name);
+
+bool setup_wallpaper_from_collection_url(const char *user_name, const char *id,
+                                         unsigned int purity);

@@ -31,9 +31,20 @@
 
 typedef enum ErrorCodeType {
     ERROR_CODE_TYPE_NONE = 0,
+    ERROR_CODE_TYPE_WALLHAVEN,
     ERROR_CODE_TYPE_CURL,
     ERROR_CODE_TYPE_URL
 } ErrorCodeType;
+
+typedef enum WallhavenErrorCode {
+    WALLHAVEN_OK = 0,
+    WALLHAVEN_NO_API_KEY,
+    WALLHAVEN_NULL_ID,
+    WALLHAVEN_NULL_USER_NAME,
+    WALLHAVEN_ALLOCATION_FAIL,
+    WALLHAVEN_MULTIPLE_INITIALIZE,
+    WALLHAVEN_CURL_INIT_FAILED
+} WallhavenErrorCode;
 
 /**
  * @brief Response code handler type.

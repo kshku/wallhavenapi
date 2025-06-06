@@ -27,10 +27,13 @@ bool reset_url(void) {
 
 bool append_query(const char *key, const char *value) {
     whStr query = whstr_create();
+    CHECKB_RETURN(whstr_setf(&query, "%s=%s", key, value), false,
+                  whstr_destroy(&query));
 
-    CHECKB_RETURN(whstr_set(&query, key), false, whstr_destroy(&query));
-    CHECKB_RETURN(whstr_appendn(&query, "=", 1), false, whstr_destroy(&query));
-    CHECKB_RETURN(whstr_append(&query, value), false, whstr_destroy(&query));
+    // CHECKB_RETURN(whstr_set(&query, key), false, whstr_destroy(&query));
+    // CHECKB_RETURN(whstr_appendn(&query, "=", 1), false,
+    // whstr_destroy(&query)); CHECKB_RETURN(whstr_append(&query, value), false,
+    // whstr_destroy(&query));
 
 #ifdef WH_DEBUG
     printf("Appending query: %s\n", query.str);
@@ -98,35 +101,42 @@ static bool format_and_append_q(const Query *q) {
             return false;
         }
 
-        CHECKB_RETURN(whstr_appendn(&query, "id:", 3), false,
+        CHECKB_RETURN(whstr_setf(&query, "id:%s", q->id), false,
                       whstr_destroy(&query));
-        CHECKB_RETURN(whstr_append(&query, q->id), false,
-                      whstr_destroy(&query));
+
+        // CHECKB_RETURN(whstr_appendn(&query, "id:", 3), false,
+        //               whstr_destroy(&query));
+        // CHECKB_RETURN(whstr_append(&query, q->id), false,
+        //               whstr_destroy(&query));
     } else {
         if (q->tags)
-            CHECKB_RETURN(whstr_append(&query, q->tags), false,
+            CHECKB_RETURN(whstr_set(&query, q->tags), false,
                           whstr_destroy(&query));
 
         if (q->user_name) {
-            CHECKB_RETURN(whstr_appendn(&query, " @", 2), false,
+            CHECKB_RETURN(whstr_appendf(&query, " @%s", q->user_name), false,
                           whstr_destroy(&query));
-            CHECKB_RETURN(whstr_append(&query, q->user_name), false,
-                          whstr_destroy(&query));
+            // CHECKB_RETURN(whstr_appendn(&query, " @", 2), false,
+            //               whstr_destroy(&query));
+            // CHECKB_RETURN(whstr_append(&query, q->user_name), false,
+            //               whstr_destroy(&query));
         }
 
         if (q->type != IMAGE_TYPE_NONE) {
-            CHECKB_RETURN(whstr_appendn(&query, " type:", 6), false,
-                          whstr_destroy(&query));
             CHECKB_RETURN(
-                whstr_append(&query, q->type == IMAGE_TYPE_PNG ? "png" : "jpg"),
+                whstr_appendf(&query, " type:%s",
+                              q->type == IMAGE_TYPE_PNG ? "png" : "jpg"),
                 false, whstr_destroy(&query));
+            // CHECKB_RETURN(
+            //     whstr_append(&query, q->type == IMAGE_TYPE_PNG ? "png" :
+            //     "jpg"), false, whstr_destroy(&query));
         }
 
         if (q->like) {
-            CHECKB_RETURN(whstr_appendn(&query, " like:", 6), false,
+            CHECKB_RETURN(whstr_appendf(&query, " like:%s", q->like), false,
                           whstr_destroy(&query));
-            CHECKB_RETURN(whstr_append(&query, q->like), false,
-                          whstr_destroy(&query));
+            // CHECKB_RETURN(whstr_append(&query, q->like), false,
+            //               whstr_destroy(&query));
         }
     }
 
@@ -154,7 +164,7 @@ static bool format_and_append_categories(unsigned int categories) {
     return true;
 }
 
-bool format_and_append_purity(unsigned int purity) {
+static bool format_and_append_purity(unsigned int purity) {
     if (purity == 0) return true;
 
     if (purity & PURITY_NSFW) CHECKP_RETURN(whapi.apikey.str, false);
@@ -309,7 +319,8 @@ static bool format_and_append_seed(const char seed[7]) {
     return true;
 }
 
-bool format_and_append_search_parameters(const SearchParameters *params) {
+static bool format_and_append_search_parameters(
+    const SearchParameters *params) {
     CHECKB_RETURN(format_and_append_q(&params->q), false);
 
     CHECKB_RETURN(format_and_append_categories(params->categories), false);
@@ -340,6 +351,113 @@ bool format_and_append_search_parameters(const SearchParameters *params) {
     CHECKB_RETURN(format_and_append_page(params->page), false);
 
     CHECKB_RETURN(format_and_append_seed(params->seed), false);
+
+    return true;
+}
+
+bool setup_wallpaper_info_url(const char *id) {
+    CHECKP_RETURN(id, false, whapi.error_code = WALLHAVEN_NULL_ID,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECKB_RETURN(concat_and_set_path(WALLPAPER_INFO_PATH, id), false);
+
+    if (whapi.apikey.str)
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+
+    return true;
+}
+
+bool setup_search_url(const SearchParameters *params) {
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECK_RETURN(whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                                 SEARCH_PATH, CURLU_URLENCODE),
+                 false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    if (whapi.apikey.str)
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+
+    CHECKB_RETURN(format_and_append_search_parameters(params), false);
+
+    return true;
+}
+
+bool setup_tag_info_url(const char *id) {
+    CHECKP_RETURN(id, false, whapi.error_code = WALLHAVEN_NULL_ID,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECKB_RETURN(concat_and_set_path(TAG_INFO_PATH, id), false);
+
+    return true;
+}
+
+bool setup_settings_url(void) {
+    CHECKP_RETURN(whapi.apikey.str, false,
+                  whapi.error_code = WALLHAVEN_NO_API_KEY,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    CHECK_RETURN(
+        whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                        USER_SETTINGS_PATH, CURLU_URLENCODE),
+        false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+
+    return true;
+}
+
+bool setup_collections_url(const char *user_name) {
+    CHECKB_RETURN(whapi.apikey.str || user_name, false,
+                  whapi.error_code = WALLHAVEN_NO_API_KEY,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    if (user_name) {
+        CHECKB_RETURN(concat_and_set_path(COLLECTIONS_PATH "/", user_name),
+                      false);
+        if (whapi.apikey.str)
+            CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+    } else {
+        CHECK_RETURN(
+            whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                            COLLECTIONS_PATH, CURLU_URLENCODE),
+            false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+    }
+
+    return true;
+}
+
+bool setup_wallpaper_from_collection_url(const char *user_name, const char *id,
+                                         unsigned int purity) {
+    CHECKP_RETURN(user_name, false, whapi.error_code = WALLHAVEN_NULL_USER_NAME,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKP_RETURN(id, false, whapi.error_code = WALLHAVEN_NULL_ID,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKB_RETURN(reset_url(), false);
+
+    whStr unid = whstr_create();
+
+    CHECKB_RETURN(whstr_setf(&unid, "%s/%s", user_name, id), false,
+                  whstr_destroy(&unid));
+
+    CHECKB_RETURN(concat_and_set_path(COLLECTIONS_PATH "/", unid.str), false,
+                  whstr_destroy(&unid));
+
+    whstr_destroy(&unid);
+
+    if (whapi.apikey.str) append_query("apikey", whapi.apikey.str);
+
+    format_and_append_purity(purity);
 
     return true;
 }

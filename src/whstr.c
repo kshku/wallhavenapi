@@ -1,5 +1,6 @@
 #include "whapi/whstr.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,7 +20,8 @@ bool whstr_setn(whStr *whstr, const char *str, size_t len) {
     // Resize if required
     if (whstr->size <= len) {
         char *temp = realloc(whstr->str, sizeof(char) * (len + 1));
-        CHECKP_RETURN(temp, false);
+        CHECKP_RETURN(temp, false, whapi.error_code = WALLHAVEN_ALLOCATION_FAIL,
+                      whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
         whstr->size = len + 1;
         whstr->str = temp;
     }
@@ -28,6 +30,29 @@ bool whstr_setn(whStr *whstr, const char *str, size_t len) {
     whstr->len = len;
     strncpy(whstr->str, str, len);
     whstr->str[whstr->len] = 0;
+
+    return true;
+}
+
+bool whstr_setf(whStr *whstr, const char *fmt, ...) {
+    va_list args;
+    size_t len;
+
+    va_start(args, fmt);
+    len = vsnprintf(NULL, 0, fmt, args);
+    va_end(args);
+
+    if (whstr->size <= len) {
+        char *temp = realloc(whstr->str, sizeof(char) * (len + 1));
+        CHECKP_RETURN(temp, false, whapi.error_code = WALLHAVEN_ALLOCATION_FAIL,
+                      whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+        whstr->size = len + 1;
+        whstr->str = temp;
+    }
+
+    va_start(args, fmt);
+    whstr->len = vsnprintf(whstr->str, whstr->size, fmt, args);
+    va_end(args);
 
     return true;
 }
@@ -48,7 +73,8 @@ bool whstr_appendn(whStr *whstr, const char *str, size_t len) {
     // Resize if required
     if (whstr->size <= whstr->len + len) {
         char *temp = realloc(whstr->str, sizeof(char) * (whstr->len + len + 1));
-        CHECKP_RETURN(temp, false);
+        CHECKP_RETURN(temp, false, whapi.error_code = WALLHAVEN_ALLOCATION_FAIL,
+                      whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
         whstr->size = len + whstr->len + 1;
 
         // If the string was null, then put null character in the beginning to
@@ -62,6 +88,36 @@ bool whstr_appendn(whStr *whstr, const char *str, size_t len) {
     whstr->len += len;
     strncat(whstr->str, str, len);
     whstr->str[whstr->len] = 0;
+
+    return true;
+}
+
+bool whstr_appendf(whStr *whstr, const char *fmt, ...) {
+    if (whstr->size == 0) whstr->str = NULL;
+
+    va_list args;
+    size_t len;
+
+    va_start(args, fmt);
+    len = vsnprintf(NULL, 0, fmt, args);
+    va_end(args);
+
+    if (whstr->size <= whstr->len + len) {
+        char *temp = realloc(whstr->str, sizeof(char) * (whstr->len + len + 1));
+        CHECKP_RETURN(temp, false, whapi.error_code = WALLHAVEN_ALLOCATION_FAIL,
+                      whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+        whstr->size = len + whstr->len + 1;
+
+        // If the string was null, then put null character in the beginning to
+        // avoid unpredictable results
+        if (!whstr->str) temp[0] = 0;
+
+        whstr->str = temp;
+    }
+
+    va_start(args, fmt);
+    whstr->len += vsnprintf((whstr->str + whstr->len), len + 1, fmt, args);
+    va_end(args);
 
     return true;
 }
