@@ -58,7 +58,7 @@ bool whstr_setf(whStr *whstr, const char *fmt, ...) {
 }
 
 void whstr_destroy(whStr *whstr) {
-    if (whstr->size) free(whstr->str);
+    free(whstr->str);
     whstr->len = whstr->size = 0;
     whstr->str = NULL;
 }

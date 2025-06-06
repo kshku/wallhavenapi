@@ -71,11 +71,11 @@ bool setup_wallpaper_info_url(const char *id);
 
 bool setup_search_url(const SearchParameters *params);
 
-bool setup_tag_info_url(const char *id);
+bool setup_tag_info_url(unsigned int id);
 
 bool setup_settings_url(void);
 
 bool setup_collections_url(const char *user_name);
 
-bool setup_wallpaper_from_collection_url(const char *user_name, const char *id,
+bool setup_wallpaper_from_collection_url(const char *user_name, unsigned int id,
                                          unsigned int purity);

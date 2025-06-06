@@ -48,6 +48,7 @@ typedef enum WallhavenErrorCode {
     WALLHAVEN_CANNOT_COMBINE_ID,
     WALLHAVEN_INVALID_SEED,
     WALLHAVEN_OPEN_FILE_FAILED,
+    WALLHAVEN_PARSING_FAILED,
 } WallhavenErrorCode;
 
 /**
@@ -70,7 +71,7 @@ typedef enum ImageType {
  * @brief Structure for the searching options.
  */
 typedef struct Query {
-        const char *id;
+        unsigned int id;
         const char *tags;
         const char *user_name;
         ImageType type;
@@ -161,11 +162,11 @@ typedef struct SearchParameters {
         Order order;
         TopRange toprange;
         Resolution atleast_resolution;
-        unsigned int exact_resolution_count;
+        size_t exact_resolution_count;
         const Resolution *exact_resolutions;
-        unsigned int ratio_count;
+        size_t ratio_count;
         const Ratio *ratios;
-        unsigned int color_count;
+        size_t color_count;
         const Color *colors;
         unsigned int page;
         const char seed[7];

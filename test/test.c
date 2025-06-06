@@ -63,15 +63,18 @@ int main(void) {
 
     whstr_destroy(&temp);
 
+    Wallpaper wall;
+    whapi_get_wallpaper_info("gwjq3d", &wall);
+
     whapi_shutdown();
 
-    whStr str = whstr_create();
+    // whStr str = whstr_create();
 
-    whstr_setf(&str, "%dx%fy%u", -10, 0.52, 20);
-    printf("%s\n", str.str);
+    // whstr_setf(&str, "%dx%fy%u", -10, 0.52, 20);
+    // printf("%s\n", str.str);
 
-    whstr_appendf(&str, "%s", "HAHAHAHAHHA");
-    printf("%s\n", str.str);
+    // whstr_appendf(&str, "%s", "HAHAHAHAHHA");
+    // printf("%s\n", str.str);
 
-    whstr_destroy(&str);
+    // whstr_destroy(&str);
 }

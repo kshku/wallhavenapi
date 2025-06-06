@@ -83,7 +83,7 @@ static bool format_and_append_q(const Query *q) {
             return false;
         }
 
-        CHECKB_RETURN(whstr_setf(&query, "id:%s", q->id), false,
+        CHECKB_RETURN(whstr_setf(&query, "id:%u", q->id), false,
                       whstr_destroy(&query));
 
     } else {
@@ -204,7 +204,7 @@ static bool format_and_append_atleast_resolution(Resolution res) {
 }
 
 static bool format_and_append_exact_resolution(const Resolution *res,
-                                               unsigned int n) {
+                                               size_t n) {
     if (n == 0) return true;
 
     whStr resolutions = whstr_create();
@@ -213,7 +213,7 @@ static bool format_and_append_exact_resolution(const Resolution *res,
     CHECKB_RETURN(whstr_setn(&resolutions, buffer, len), false,
                   whstr_destroy(&resolutions));
 
-    for (unsigned int i = 1; i < n; ++i) {
+    for (size_t i = 1; i < n; ++i) {
         len = snprintf(buffer, 20, ",%ux%u", res[i].width, res[i].height);
         CHECKB_RETURN(whstr_appendn(&resolutions, buffer, len), false,
                       whstr_destroy(&resolutions));
@@ -227,7 +227,7 @@ static bool format_and_append_exact_resolution(const Resolution *res,
     return true;
 }
 
-static bool format_and_append_ratios(const Ratio *ratios, unsigned int n) {
+static bool format_and_append_ratios(const Ratio *ratios, size_t n) {
     if (n == 0) return true;
 
     whStr ra = whstr_create();
@@ -236,7 +236,7 @@ static bool format_and_append_ratios(const Ratio *ratios, unsigned int n) {
         snprintf(buffer, 20, "%ux%u", ratios[0].width, ratios[0].height);
     CHECKB_RETURN(whstr_setn(&ra, buffer, len), false, whstr_destroy(&ra));
 
-    for (unsigned int i = 1; i < n; ++i) {
+    for (size_t i = 1; i < n; ++i) {
         len = snprintf(buffer, 20, ",%ux%u", ratios[i].width, ratios[i].height);
         CHECKB_RETURN(whstr_appendn(&ra, buffer, len), false,
                       whstr_destroy(&ra));
@@ -249,7 +249,7 @@ static bool format_and_append_ratios(const Ratio *ratios, unsigned int n) {
     return true;
 }
 
-static bool format_and_append_colors(const Color *colors, unsigned int n) {
+static bool format_and_append_colors(const Color *colors, size_t n) {
     if (n == 0) return true;
 
     whStr col = whstr_create();
@@ -257,7 +257,7 @@ static bool format_and_append_colors(const Color *colors, unsigned int n) {
     size_t len = snprintf(buffer, 10, "%06x", colors[0]);
     CHECKB_RETURN(whstr_setn(&col, buffer, len), false, whstr_destroy(&col));
 
-    for (unsigned int i = 1; i < n; ++i) {
+    for (size_t i = 1; i < n; ++i) {
         len = snprintf(buffer, 10, ",%06x", colors[i]);
         CHECKB_RETURN(whstr_appendn(&col, buffer, len), false,
                       whstr_destroy(&col));
@@ -363,13 +363,17 @@ bool setup_search_url(const SearchParameters *params) {
     return true;
 }
 
-bool setup_tag_info_url(const char *id) {
-    CHECKP_RETURN(id, false, whapi.error_code = WALLHAVEN_NULL_ID,
-                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
-
+bool setup_tag_info_url(unsigned int id) {
     CHECKB_RETURN(reset_url(), false);
 
-    CHECKB_RETURN(concat_and_set_path(TAG_INFO_PATH, id), false);
+    whStr temp = whstr_create();
+
+    CHECKB_RETURN(whstr_setf(&temp, "%u", id), false, whstr_destroy(&temp));
+
+    CHECKB_RETURN(concat_and_set_path(TAG_INFO_PATH, temp.str), false,
+                  whstr_destroy(&temp));
+
+    whstr_destroy(&temp);
 
     return true;
 }
@@ -414,19 +418,16 @@ bool setup_collections_url(const char *user_name) {
     return true;
 }
 
-bool setup_wallpaper_from_collection_url(const char *user_name, const char *id,
+bool setup_wallpaper_from_collection_url(const char *user_name, unsigned int id,
                                          unsigned int purity) {
     CHECKP_RETURN(user_name, false, whapi.error_code = WALLHAVEN_NULL_USER_NAME,
-                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
-
-    CHECKP_RETURN(id, false, whapi.error_code = WALLHAVEN_NULL_ID,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
     CHECKB_RETURN(reset_url(), false);
 
     whStr unid = whstr_create();
 
-    CHECKB_RETURN(whstr_setf(&unid, "%s/%s", user_name, id), false,
+    CHECKB_RETURN(whstr_setf(&unid, "%s/%u", user_name, id), false,
                   whstr_destroy(&unid));
 
     CHECKB_RETURN(concat_and_set_path(COLLECTIONS_PATH "/", unid.str), false,
