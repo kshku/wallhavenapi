@@ -54,6 +54,8 @@ static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
 static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
                           const char *name);
 
+static bool parse_collection(cJSON *json, Collection *collection);
+
 bool parse_wallpaper_info(cJSON *json, Wallpaper *wallpaper,
                           bool search_result) {
     cJSON *data =
@@ -155,7 +157,7 @@ bool parse_tag(cJSON *json, Tag *tag, bool no_data) {
 }
 
 bool parse_search_result(cJSON *json, SearchResult *search_result,
-                         bool exact_tag_search) {
+                         bool exact_tag_search, bool collection) {
     cJSON *data = cJSON_GetObjectItemCaseSensitive(json, "data");
 
     CHECKB_RETURN(cJSON_IsArray(data), false,
@@ -195,36 +197,38 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
         {       .key = "total", .psize_t = &search_result->total, .type = SIZE_T},
     };
 
-    KeyStrVar seed = {.key = "seed", .var = &search_result->seed};
+    if (!collection) {
+        KeyStrVar seed = {.key = "seed", .var = &search_result->seed};
 
-    CHECKB_RETURN(
-        parse_key_num_vars(meta, keynumvars,
-                           (sizeof(keynumvars) / sizeof(keynumvars[0]))),
-        false, whapi_destroy_search_result(search_result));
+        CHECKB_RETURN(
+            parse_key_num_vars(meta, keynumvars,
+                               (sizeof(keynumvars) / sizeof(keynumvars[0]))),
+            false, whapi_destroy_search_result(search_result));
 
-    CHECKB_RETURN(parse_key_string_vars(meta, &seed, 1), false,
-                  whapi_destroy_search_result(search_result));
-
-    if (exact_tag_search) {
-        search_result->type = EXACT_TAG_SEARCH;
-        cJSON *query = cJSON_GetObjectItemCaseSensitive(meta, "query");
-        CHECKB_RETURN(cJSON_IsObject(query), false,
+        CHECKB_RETURN(parse_key_string_vars(meta, &seed, 1), false,
                       whapi_destroy_search_result(search_result));
 
-        KeyNumVar id = {
-            .key = "id", .psize_t = &search_result->id, .type = SIZE_T};
-        KeyStrVar tag = {.key = "tag", .var = &search_result->tag};
-        CHECKB_RETURN(parse_key_num_vars(query, &id, 1), false,
-                      whapi_destroy_search_result(search_result));
+        if (exact_tag_search) {
+            search_result->type = EXACT_TAG_SEARCH;
+            cJSON *query = cJSON_GetObjectItemCaseSensitive(meta, "query");
+            CHECKB_RETURN(cJSON_IsObject(query), false,
+                          whapi_destroy_search_result(search_result));
 
-        CHECKB_RETURN(parse_key_string_vars(query, &tag, 1), false,
-                      whapi_destroy_search_result(search_result));
-    } else {
-        search_result->type = NORMAL_SEARCH;
+            KeyNumVar id = {
+                .key = "id", .psize_t = &search_result->id, .type = SIZE_T};
+            KeyStrVar tag = {.key = "tag", .var = &search_result->tag};
+            CHECKB_RETURN(parse_key_num_vars(query, &id, 1), false,
+                          whapi_destroy_search_result(search_result));
 
-        KeyStrVar query = {.key = "query", .var = &search_result->query};
-        CHECKB_RETURN(parse_key_string_vars(meta, &query, 1), false,
-                      whapi_destroy_search_result(search_result));
+            CHECKB_RETURN(parse_key_string_vars(query, &tag, 1), false,
+                          whapi_destroy_search_result(search_result));
+        } else {
+            search_result->type = NORMAL_SEARCH;
+
+            KeyStrVar query = {.key = "query", .var = &search_result->query};
+            CHECKB_RETURN(parse_key_string_vars(meta, &query, 1), false,
+                          whapi_destroy_search_result(search_result));
+        }
     }
 
     return true;
@@ -276,6 +280,32 @@ bool parse_settings(cJSON *json, Settings *settings) {
         parse_strings(data, &settings->user_blacklist,
                       &settings->user_blacklist_count, "user_blacklist"),
         false, whapi_destroy_settings(settings));
+
+    return true;
+}
+
+bool parse_collections(cJSON *json, Collections *collections) {
+    cJSON *data = cJSON_GetObjectItem(json, "data");
+    CHECKB_RETURN(cJSON_IsArray(data), false,
+                  whapi_destroy_collections(collections));
+
+    collections->collection_count = cJSON_GetArraySize(data);
+
+    collections->collections =
+        (Collection *)calloc(collections->collection_count, sizeof(Collection));
+    CHECKP_RETURN(collections->collections, false,
+                  whapi_destroy_collections(collections));
+
+    size_t i = 0;
+    cJSON *collection;
+    cJSON_ArrayForEach(collection, data) {
+        CHECKB_RETURN(cJSON_IsObject(collection), false,
+                      whapi_destroy_collections(collections));
+        CHECKB_RETURN(
+            parse_collection(collection, &collections->collections[i]), false,
+            whapi_destroy_collections(collections));
+        ++i;
+    }
 
     return true;
 }
@@ -571,6 +601,30 @@ static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
         (*strings)[i] = item->valuestring;
         ++i;
     }
+
+    return true;
+}
+
+static bool parse_collection(cJSON *json, Collection *collection) {
+    CHECKB_RETURN(cJSON_IsObject(json), false);
+
+    unsigned int public;
+    KeyNumVar keynumvars[] = {
+        {    .key = "id",    .psize_t = &collection->id,       .type = SIZE_T},
+        { .key = "views", .psize_t = &collection->views,       .type = SIZE_T},
+        {.key = "public",              .puint = &public, .type = UNSIGNED_INT},
+        { .key = "count", .psize_t = &collection->count,       .type = SIZE_T},
+    };
+
+    CHECKB_RETURN(
+        parse_key_num_vars(json, keynumvars,
+                           (sizeof(keynumvars) / sizeof(keynumvars[0]))),
+        false);
+
+    collection->public = (bool)public;
+
+    KeyStrVar label = {.key = "label", .var = &collection->label};
+    CHECKB_RETURN(parse_key_string_vars(json, &label, 1), false);
 
     return true;
 }

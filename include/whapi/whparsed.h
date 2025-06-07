@@ -117,11 +117,11 @@ typedef struct SearchResult {
 } SearchResult;
 
 typedef struct Collection {
-        unsigned int id;
+        size_t id;
         const char *label;
-        unsigned int views;
+        size_t views;
         bool public;
-        unsigned int count;
+        size_t count;
 } Collection;
 
 typedef struct Collections {
