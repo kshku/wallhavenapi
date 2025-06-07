@@ -120,7 +120,7 @@ typedef struct Resolution {
 } Resolution;
 
 typedef enum Color {
-    COLOR_NONE = 0,
+    COLOR_NONE = -1,
     COLOR_ROSEWOOD = 0x660000,
     COLOR_CRIMSONRED = 0x990000,
     COLOR_ROSSOCORSA = 0xcc0000,
@@ -150,7 +150,9 @@ typedef enum Color {
     COLOR_PASTELGREY = 0xcccccc,
     COLOR_WHITE = 0xffffff,
     COLOR_GUNPOWDER = 0x424153,
-} Color;
+}
+
+Color;
 
 typedef Resolution Ratio;
 

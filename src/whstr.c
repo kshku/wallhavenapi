@@ -123,6 +123,6 @@ bool whstr_appendf(whStr *whstr, const char *fmt, ...) {
 }
 
 void whstr_clear(whStr *whstr) {
+    if (whstr->str) whstr->str[0] = 0;
     whstr->len = 0;
-    whstr->str[0] = 0;
 }

@@ -12,7 +12,8 @@ int main(void) {
     SearchParameters search_params = {
         .q = {.tags = "mountain"},
         .color_count = 2,
-        .colors = (Color[]){COLOR_LEMONGRASS, COLOR_SCIENCEBLUE}
+        .colors = (Color[]){COLOR_LEMONGRASS,
+              COLOR_SCIENCEBLUE}  /** BLACK = 0 and NONE = -1*/
     };
 
     whapi_set_apikey("XYZ");
@@ -21,23 +22,15 @@ int main(void) {
     whapi_get_wallpaper_info_raw_to_file("gwjq3d", "apiwallpaperinfo.json");
     // printf("Response: %s\n", temp.str);
 
-    whstr_clear(&temp);
-
     whapi_search_raw(search_params, &temp);
     whapi_search_raw_to_file(search_params, "apisearch.json");
     // printf("Response: %s\n", temp.str);
 
-    whstr_clear(&temp);
-
     whapi_get_collections_raw(NULL, &temp);
     whapi_get_collections_raw_to_file(NULL, "apicollections.json");
 
-    whstr_clear(&temp);
-
     whapi_get_collections_raw("kshku", &temp);
     whapi_get_collections_raw_to_file("kshku", "apicollectionsuser.json");
-
-    whstr_clear(&temp);
 
     whapi_set_apikey(NULL);
 
@@ -45,18 +38,12 @@ int main(void) {
     whapi_get_wallpaper_info_raw_to_file("gwjq3d", "wallpaperinfo.json");
     // printf("Response: %s\n", temp.str);
 
-    whstr_clear(&temp);
-
     whapi_search_raw(search_params, &temp);
     whapi_search_raw_to_file(search_params, "search.json");
     // printf("Response: %s\n", temp.str);
 
-    whstr_clear(&temp);
-
     whapi_get_collections_raw(NULL, &temp);
     whapi_get_collections_raw_to_file(NULL, "collections.json");
-
-    whstr_clear(&temp);
 
     whapi_get_collections_raw("kshku", &temp);
     whapi_get_collections_raw_to_file("kshku", "collectionsuser.json");
@@ -65,6 +52,7 @@ int main(void) {
 
     Wallpaper wall;
     whapi_get_wallpaper_info("gwjq3d", &wall);
+    whapi_destroy_wallpaper(&wall);
 
     whapi_shutdown();
 

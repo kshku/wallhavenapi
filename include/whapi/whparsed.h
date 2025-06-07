@@ -3,15 +3,17 @@
 #include "whapi/whcore.h"
 #include "whapi/whstr.h"
 
+typedef struct cJSON cJSON;
+
 typedef struct Tag {
-        unsigned int id;
+        size_t id;
         const char *name;
         const char *alias;
-        unsigned int category_id;
+        size_t category_id;
         const char *category;
         Purity purity;
         const char *created_at;
-        whStr res;
+        cJSON *json;
 } Tag;
 
 typedef struct Settings {
@@ -34,7 +36,7 @@ typedef struct Settings {
         size_t user_blacklist_count;
         const char **user_blacklists;
 
-        whStr res;
+        cJSON *json;
 } Settings;
 
 typedef struct Thumbs {
@@ -68,7 +70,7 @@ typedef struct Wallpaper {
         Category category;
 
         Resolution resolution;
-        Ratio ratio;
+        float ratio;
 
         size_t file_size;
         ImageType type;
@@ -85,15 +87,18 @@ typedef struct Wallpaper {
         size_t tag_count;
         Tag *tags;
 
-        whStr res;
+        cJSON *json;
 } Wallpaper;
 
-typedef struct Meta {
+typedef struct SearchResult {
+        size_t wallpaper_count;
+        Wallpaper *wallpapers;
+
         unsigned int current_page;
         unsigned int last_page;
         unsigned int per_page;
         unsigned int total;
-        const char seed[7];
+        const char *seed;
 
         struct {
                 union {
@@ -107,15 +112,8 @@ typedef struct Meta {
 
                 enum { NORMAL, EXACT_TAG } type;
         };
-} Meta;
 
-typedef struct SearchResult {
-        size_t wallpaper_count;
-        Wallpaper *wallpapers;
-
-        Meta meta;
-
-        whStr res;
+        cJSON *json;
 } SearchResult;
 
 typedef struct Collection {
@@ -130,7 +128,7 @@ typedef struct Collections {
         size_t collection_count;
         Collection *collections;
 
-        whStr res;
+        cJSON *json;
 } Collections;
 
 /**

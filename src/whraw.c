@@ -27,17 +27,10 @@ static bool setup_and_fetch_data(whStr *res) {
                      whapi.curl, CURLOPT_WRITEDATA, (void *)res),
                  false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
 
-    whStr copy = whstr_create();
-    CHECKB_RETURN(whstr_setn(&copy, res->str, res->len), false,
-                  whstr_destroy(&copy));
-
     do {
-        CHECKB_RETURN(whstr_setn(res, copy.str, copy.len), false,
-                      whstr_destroy(&copy));
-        CHECKB_RETURN(perform_call(), false, whstr_destroy(&copy));
+        whstr_clear(res);
+        CHECKB_RETURN(perform_call(), false);
     } while (whapi.retry);
-
-    whstr_destroy(&copy);
 
     return true;
 }

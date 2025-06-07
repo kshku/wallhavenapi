@@ -16,6 +16,9 @@ set(SRCS
     whrawfile.c
     whcommon.h
     whcommon.c
+    cJSON.h
+    cJSON.c
+    parse_funcs.h
 )
 
 add_library(whapi_static STATIC)

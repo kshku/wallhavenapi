@@ -2,51 +2,62 @@
 
 #include <stdlib.h>
 
+#include "cJSON.h"
+#include "parse_funcs.h"
 #include "whapi/whraw.h"
 #include "whcommon.h"
 
 bool whapi_get_wallpaper_info(const char *id, Wallpaper *wallpaper) {
-    *wallpaper = (Wallpaper){.res = whstr_create()};
+    whStr res = whstr_create();
 
-    CHECKB_RETURN(whapi_get_wallpaper_info_raw(id, &wallpaper->res), false,
-                  whstr_destroy(&wallpaper->res));
+    CHECKB_RETURN(whapi_get_wallpaper_info_raw(id, &res), false,
+                  whstr_destroy(&res));
+
+    CHECKB_RETURN(parse_wallpaper_info(wallpaper, &res), false,
+                  whstr_destroy(&res));
+
+    whstr_destroy(&res);
 
     return true;
 }
 
 bool whapi_search(SearchParameters params, SearchResult *search_result) {
-    // *search_result = (SearchResult){.res = whstr_create()};
-    search_result->res = whstr_create();
+    *search_result = (SearchResult){0};
 
-    CHECKB_RETURN(whapi_search_raw(params, &search_result->res), false,
-                  whstr_destroy(&search_result->res));
+    whStr res = whstr_create();
+
+    CHECKB_RETURN(whapi_search_raw(params, &res), false, whstr_destroy(&res));
 
     return true;
 }
 
 bool whapi_get_tag_info(unsigned int id, Tag *tag) {
-    *tag = (Tag){.res = whstr_create()};
+    *tag = (Tag){0};
 
-    CHECKB_RETURN(whapi_get_tag_info_raw(id, &tag->res), false,
-                  whstr_destroy(&tag->res));
+    whStr res;
+
+    CHECKB_RETURN(whapi_get_tag_info_raw(id, &res), false, whstr_destroy(&res));
 
     return true;
 }
 
 bool whapi_get_settings(Settings *settings) {
-    *settings = (Settings){.res = whstr_create()};
+    *settings = (Settings){0};
 
-    CHECKB_RETURN(whapi_get_settings_raw(&settings->res), false,
-                  whstr_destroy(&settings->res));
+    whStr res;
+
+    CHECKB_RETURN(whapi_get_settings_raw(&res), false, whstr_destroy(&res));
 
     return true;
 }
 
 bool whapi_get_collections(const char *user_name, Collections *collections) {
-    *collections = (Collections){.res = whstr_create()};
+    *collections = (Collections){0};
 
-    CHECKB_RETURN(whapi_get_collections_raw(user_name, &collections->res),
-                  false, whstr_destroy(&collections->res));
+    whStr res;
+
+    CHECKB_RETURN(whapi_get_collections_raw(user_name, &res), false,
+                  whstr_destroy(&res));
 
     return true;
 }
@@ -54,17 +65,21 @@ bool whapi_get_collections(const char *user_name, Collections *collections) {
 bool whapi_get_wallpapers_from_collection(const char *user_name,
                                           unsigned int id, unsigned int purity,
                                           SearchResult *search_result) {
-    search_result->res = whstr_create();
+    *search_result = (SearchResult){0};
 
-    CHECKB_RETURN(whapi_get_wallpapers_from_collection_raw(
-                      user_name, id, purity, &search_result->res),
-                  false, whstr_destroy(&search_result->res));
+    whStr res = whstr_create();
+
+    CHECKB_RETURN(
+        whapi_get_wallpapers_from_collection_raw(user_name, id, purity, &res),
+        false, whstr_destroy(&res));
 
     return true;
 }
 
 void whapi_destroy_tag(Tag *tag) {
-    whstr_destroy(&tag->res);
+    if (tag->json) cJSON_Delete(tag->json);
+
+    *tag = (Tag){0};
 }
 
 void whapi_destroy_settings(Settings *settings) {
@@ -76,14 +91,18 @@ void whapi_destroy_settings(Settings *settings) {
 
     free(settings->user_blacklists);
 
-    whstr_destroy(&settings->res);
+    if (settings->json) cJSON_Delete(settings->json);
+
+    *settings = (Settings){0};
 }
 
 void whapi_destroy_wallpaper(Wallpaper *wallpaper) {
     free(wallpaper->colors);
     free(wallpaper->tags);
 
-    whstr_destroy(&wallpaper->res);
+    if (wallpaper->json) cJSON_Delete(wallpaper->json);
+
+    *wallpaper = (Wallpaper){0};
 }
 
 void whapi_destroy_search_result(SearchResult *search_result) {
@@ -92,11 +111,15 @@ void whapi_destroy_search_result(SearchResult *search_result) {
 
     free(search_result->wallpapers);
 
-    whstr_destroy(&search_result->res);
+    if (search_result->json) cJSON_Delete(search_result->json);
+
+    *search_result = (SearchResult){0};
 }
 
 void whapi_destroy_collections(Collections *collections) {
     free(collections->collections);
 
-    whstr_destroy(&collections->res);
+    if (collections->json) cJSON_Delete(collections->json);
+
+    *collections = (Collections){0};
 }
