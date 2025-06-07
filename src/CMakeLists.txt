@@ -19,6 +19,7 @@ set(SRCS
     cJSON.h
     cJSON.c
     parse_funcs.h
+    parse_funcs.c
 )
 
 add_library(whapi_static STATIC)

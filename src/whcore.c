@@ -83,7 +83,7 @@ static bool default_response_code_handler(unsigned int response_code) {
             return false;
         case 401:
             // Unauthorized access
-            whapi.error_code = WALLHAVEN_NO_API_KEY,
+            whapi.error_code = WALLHAVEN_API_KEY_ERROR,
             whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
             return false;
         case 429:

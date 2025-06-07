@@ -94,10 +94,10 @@ typedef struct SearchResult {
         size_t wallpaper_count;
         Wallpaper *wallpapers;
 
-        unsigned int current_page;
-        unsigned int last_page;
-        unsigned int per_page;
-        unsigned int total;
+        size_t current_page;
+        size_t last_page;
+        size_t per_page;
+        size_t total;
         const char *seed;
 
         struct {
@@ -105,12 +105,12 @@ typedef struct SearchResult {
                         const char *query;
 
                         struct {
-                                unsigned int id;
+                                size_t id;
                                 const char *tag;
                         };
                 };
 
-                enum { NORMAL, EXACT_TAG } type;
+                enum { NORMAL_SEARCH, EXACT_TAG_SEARCH } type;
         };
 
         cJSON *json;

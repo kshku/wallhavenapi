@@ -39,6 +39,7 @@ typedef enum ErrorCodeType {
 typedef enum WallhavenErrorCode {
     WALLHAVEN_OK = 0,
     WALLHAVEN_NO_API_KEY,
+    WALLHAVEN_API_KEY_ERROR,
     WALLHAVEN_NULL_ID,
     WALLHAVEN_NULL_USER_NAME,
     WALLHAVEN_ALLOCATION_FAIL,
