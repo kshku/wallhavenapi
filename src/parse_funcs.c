@@ -42,6 +42,18 @@ static bool parse_tags(cJSON *json, Tag **tags, size_t *tag_count);
 
 static bool parse_thumbs(cJSON *json, Thumbs *thumbs);
 
+static bool parse_purities(cJSON *json, unsigned int *purity);
+
+static bool parse_categories(cJSON *json, unsigned int *categories);
+
+static bool parse_toprange(cJSON *json, TopRange *toprange);
+
+static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
+                                        size_t *count, const char *name);
+
+static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
+                          const char *name);
+
 bool parse_wallpaper_info(cJSON *json, Wallpaper *wallpaper,
                           bool search_result) {
     cJSON *data =
@@ -111,7 +123,12 @@ bool parse_wallpaper_info(cJSON *json, Wallpaper *wallpaper,
     return true;
 }
 
-bool parse_tag(cJSON *json, Tag *tag) {
+bool parse_tag(cJSON *json, Tag *tag, bool no_data) {
+    cJSON *data =
+        no_data ? json : cJSON_GetObjectItemCaseSensitive(json, "data");
+
+    CHECKB_RETURN(cJSON_IsObject(data), false, whapi_destroy_tag(tag));
+
     KeyStrVar keystrvars[] = {
         {      .key = "name",       .var = &tag->name},
         {     .key = "alias",      .var = &tag->alias},
@@ -122,14 +139,15 @@ bool parse_tag(cJSON *json, Tag *tag) {
         {         .key = "id",          .psize_t = &tag->id, .type = SIZE_T},
         {.key = "category_id", .psize_t = &tag->category_id, .type = SIZE_T},
     };
-    CHECKB_RETURN(parse_purity(json, &tag->purity), false,
+
+    CHECKB_RETURN(parse_purity(data, &tag->purity), false,
                   whapi_destroy_tag(tag));
     CHECKB_RETURN(
-        parse_key_string_vars(json, keystrvars,
+        parse_key_string_vars(data, keystrvars,
                               (sizeof(keystrvars) / sizeof(keystrvars[0]))),
         false, whapi_destroy_tag(tag));
     CHECKB_RETURN(
-        parse_key_num_vars(json, keynumvars,
+        parse_key_num_vars(data, keynumvars,
                            (sizeof(keynumvars) / sizeof(keynumvars[0]))),
         false, whapi_destroy_tag(tag));
 
@@ -208,6 +226,56 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
         CHECKB_RETURN(parse_key_string_vars(meta, &query, 1), false,
                       whapi_destroy_search_result(search_result));
     }
+
+    return true;
+}
+
+bool parse_settings(cJSON *json, Settings *settings) {
+    cJSON *data = cJSON_GetObjectItemCaseSensitive(json, "data");
+    CHECKB_RETURN(cJSON_IsObject(data), false,
+                  whapi_destroy_settings(settings));
+
+    const char *buf;
+    KeyStrVar keystrvars[] = {
+        {.key = "thumb_size", .var = &settings->thumb_size},
+        {  .key = "per_page",                  .var = &buf},
+    };
+
+    CHECKB_RETURN(
+        parse_key_string_vars(data, keystrvars,
+                              (sizeof(keystrvars) / sizeof(keystrvars[0]))),
+        false, whapi_destroy_settings(settings));
+
+    sscanf(buf, "%lu", &settings->per_page);
+
+    CHECKB_RETURN(parse_purities(data, &settings->purity), false,
+                  whapi_destroy_settings(settings));
+
+    CHECKB_RETURN(parse_categories(data, &settings->categories), false,
+                  whapi_destroy_settings(settings));
+
+    CHECKB_RETURN(parse_toprange(data, &settings->toplist_range), false,
+                  whapi_destroy_settings(settings));
+
+    CHECKB_RETURN(
+        parse_resolutions_or_ratios(data, &settings->resolutions,
+                                    &settings->resolution_count, "resolutions"),
+        false, whapi_destroy_settings(settings));
+
+    CHECKB_RETURN(parse_resolutions_or_ratios(data, &settings->aspect_ratios,
+                                              &settings->aspect_ratio_count,
+                                              "aspect_ratios"),
+                  false, whapi_destroy_settings(settings));
+
+    CHECKB_RETURN(
+        parse_strings(data, &settings->tag_blacklist,
+                      &settings->tag_blacklist_count, "tag_blacklist"),
+        false, whapi_destroy_settings(settings));
+
+    CHECKB_RETURN(
+        parse_strings(data, &settings->user_blacklist,
+                      &settings->user_blacklist_count, "user_blacklist"),
+        false, whapi_destroy_settings(settings));
 
     return true;
 }
@@ -352,7 +420,7 @@ static bool parse_tags(cJSON *json, Tag **tags, size_t *tag_count) {
     cJSON *tag;
     cJSON_ArrayForEach(tag, tgs) {
         CHECKB_RETURN(cJSON_IsObject(tag), false);
-        CHECKB_RETURN(parse_tag(tag, &((*tags)[i])), false);
+        CHECKB_RETURN(parse_tag(tag, &((*tags)[i]), true), false);
         ++i;
     }
 
@@ -373,6 +441,136 @@ static bool parse_thumbs(cJSON *json, Thumbs *thumbs) {
         parse_key_string_vars(tms, keystrvars,
                               (sizeof(keystrvars) / sizeof(keystrvars[0]))),
         false);
+
+    return true;
+}
+
+static bool parse_purities(cJSON *json, unsigned int *purity) {
+    cJSON *pty = cJSON_GetObjectItemCaseSensitive(json, "purity");
+    CHECKB_RETURN(cJSON_IsArray(pty), false);
+
+    *purity = PURITY_NONE;
+
+    cJSON *p;
+    cJSON_ArrayForEach(p, pty) {
+        CHECKB_RETURN(cJSON_IsString(p), false);
+
+        if ((!((*purity) & PURITY_SFW))
+            && (!strncmp(pty->valuestring, "sfw", 3)))
+            *purity |= PURITY_SFW;
+        else if ((!((*purity) & PURITY_NSFW))
+                 && (!strncmp(pty->valuestring, "nsfw", 4)))
+            *purity |= PURITY_NSFW;
+        else *purity |= PURITY_SKETCHY;
+    }
+
+    return true;
+}
+
+static bool parse_categories(cJSON *json, unsigned int *categories) {
+    cJSON *ctg = cJSON_GetObjectItemCaseSensitive(json, "categories");
+    CHECKB_RETURN(cJSON_IsArray(ctg), false);
+
+    *categories = CATEGORY_NONE;
+
+    cJSON *c;
+    cJSON_ArrayForEach(c, ctg) {
+        CHECKB_RETURN(cJSON_IsString(c), false);
+
+        if ((!((*categories) & CATEGORY_ANIME))
+            && (!strncmp(ctg->valuestring, "anime", 5)))
+            *categories |= CATEGORY_ANIME;
+        else if ((!((*categories) & CATEGORY_PEOPLE))
+                 && (!strncmp(ctg->valuestring, "people", 6)))
+            *categories |= CATEGORY_PEOPLE;
+        else *categories |= CATEGORY_GENERAL;
+    }
+
+    return true;
+}
+
+static bool parse_toprange(cJSON *json, TopRange *toprange) {
+    cJSON *tr = cJSON_GetObjectItem(json, "toplist_range");
+    CHECKB_RETURN(cJSON_IsString(tr), false);
+
+    *toprange = TOPRANGE_NONE;
+
+    switch (tr->valuestring[0]) {
+        case '1': {
+            switch (tr->valuestring[1]) {
+                case 'd':
+                    *toprange = TOPRANGE_1D;
+                    break;
+                case 'w':
+                    *toprange = TOPRANGE_1W;
+                    break;
+                case 'M':
+                    *toprange = TOPRANGE_1M;
+                    break;
+                case 'y':
+                    *toprange = TOPRANGE_1Y;
+                    break;
+                default:
+                    return false;
+            }
+        } break;
+        case '3': {
+            switch (tr->valuestring[1]) {
+                case 'd':
+                    *toprange = TOPRANGE_3D;
+                    break;
+                case 'M':
+                    *toprange = TOPRANGE_3M;
+                    break;
+                default:
+                    return false;
+            }
+        } break;
+        case '6':
+            *toprange = TOPRANGE_6M;
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
+                                        size_t *count, const char *name) {
+    cJSON *items = cJSON_GetObjectItem(json, name);
+    CHECKB_RETURN(cJSON_IsArray(items), false);
+    *count = cJSON_GetArraySize(items);
+
+    *rrs = (Resolution *)malloc((*count) * sizeof(Resolution));
+
+    size_t i = 0;
+    cJSON *item;
+    cJSON_ArrayForEach(item, items) {
+        CHECKB_RETURN(cJSON_IsString(item), false);
+        sscanf(item->valuestring, "%ux%u", &((*rrs)[i]).width,
+               &((*rrs)[i]).height);
+        ++i;
+    }
+
+    return true;
+}
+
+static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
+                          const char *name) {
+    cJSON *items = cJSON_GetObjectItem(json, name);
+    CHECKB_RETURN(cJSON_IsArray(items), false);
+    *count = cJSON_GetArraySize(items);
+
+    *strings = (const char **)malloc((*count) * sizeof(const char *));
+
+    size_t i = 0;
+    cJSON *item;
+    cJSON_ArrayForEach(item, items) {
+        CHECKB_RETURN(cJSON_IsString(item), false);
+        (*strings)[i] = item->valuestring;
+        ++i;
+    }
 
     return true;
 }

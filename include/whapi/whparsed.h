@@ -18,9 +18,11 @@ typedef struct Tag {
 
 typedef struct Settings {
         const char *thumb_size;
-        unsigned int per_page;
+        size_t per_page;
         unsigned int purity;
         unsigned int categories;
+
+        TopRange toplist_range;
 
         size_t resolution_count;
         Resolution *resolutions;
@@ -28,13 +30,11 @@ typedef struct Settings {
         size_t aspect_ratio_count;
         Ratio *aspect_ratios;
 
-        TopRange toplist_range;
-
         size_t tag_blacklist_count;
-        const char **tag_blacklists;
+        const char **tag_blacklist;
 
         size_t user_blacklist_count;
-        const char **user_blacklists;
+        const char **user_blacklist;
 
         cJSON *json;
 } Settings;

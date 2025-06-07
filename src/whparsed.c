@@ -61,7 +61,7 @@ bool whapi_get_tag_info(unsigned int id, Tag *tag) {
                   whapi.error_code = WALLHAVEN_PARSING_FAILED,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
-    CHECKB_RETURN(parse_tag(tag->json, tag), false, whstr_destroy(&res));
+    CHECKB_RETURN(parse_tag(tag->json, tag, false), false, whstr_destroy(&res));
 
     whstr_destroy(&res);
 
@@ -74,6 +74,14 @@ bool whapi_get_settings(Settings *settings) {
     whStr res = whstr_create();
 
     CHECKB_RETURN(whapi_get_settings_raw(&res), false, whstr_destroy(&res));
+
+    settings->json = cJSON_ParseWithLength(res.str, res.len);
+    CHECKP_RETURN(settings->json, false, whstr_destroy(&res);
+                  whapi.error_code = WALLHAVEN_PARSING_FAILED,
+                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+
+    CHECKB_RETURN(parse_settings(settings->json, settings), false,
+                  whstr_destroy(&res));
 
     whstr_destroy(&res);
 
@@ -120,9 +128,9 @@ void whapi_destroy_settings(Settings *settings) {
 
     free(settings->aspect_ratios);
 
-    free(settings->tag_blacklists);
+    free(settings->tag_blacklist);
 
-    free(settings->user_blacklists);
+    free(settings->user_blacklist);
 
     if (settings->json) cJSON_Delete(settings->json);
 
