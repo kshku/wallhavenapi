@@ -39,7 +39,6 @@ typedef enum ErrorCodeType {
 typedef enum WallhavenErrorCode {
     WALLHAVEN_OK = 0,
     WALLHAVEN_NO_API_KEY,
-    WALLHAVEN_API_KEY_ERROR,
     WALLHAVEN_NULL_ID,
     WALLHAVEN_NULL_USER_NAME,
     WALLHAVEN_ALLOCATION_FAIL,
@@ -50,6 +49,11 @@ typedef enum WallhavenErrorCode {
     WALLHAVEN_INVALID_SEED,
     WALLHAVEN_OPEN_FILE_FAILED,
     WALLHAVEN_PARSING_FAILED,
+    WALLHAVEN_UNAUTHORIZED_ACCESS,
+    WALLHAVEN_NOTHING_IS_HERE,
+    WALLHAVEN_API_CALL_LIMIT_EXCEED,
+    WALLHAVEN_BAD_REQUEST,
+    WALLHAVEN_UNKNOWN_ERROR,
 } WallhavenErrorCode;
 
 /**
@@ -72,7 +76,7 @@ typedef enum ImageType {
  * @brief Structure for the searching options.
  */
 typedef struct Query {
-        unsigned int id;
+        size_t id;
         const char *tags;
         const char *user_name;
         ImageType type;
@@ -83,14 +87,18 @@ typedef enum Category {
     CATEGORY_NONE = 0,
     CATEGORY_GENERAL = 1 << 0,
     CATEGORY_ANIME = 1 << 1,
-    CATEGORY_PEOPLE = 1 << 2
-} Category;
+    CATEGORY_PEOPLE = 1 << 2,
+    CATEGORY_ALL = CATEGORY_ANIME | CATEGORY_GENERAL | CATEGORY_PEOPLE,
+}
+
+Category;
 
 typedef enum Purity {
     PURITY_NONE = 0,
     PURITY_SFW = 1 << 0,
     PURITY_SKETCHY = 1 << 1,
-    PURITY_NSFW = 1 << 2
+    PURITY_NSFW = 1 << 2,
+    PURITY_ALL = PURITY_SFW | PURITY_NSFW | PURITY_SKETCHY,
 } Purity;
 
 typedef enum Sorting {
@@ -121,7 +129,6 @@ typedef struct Resolution {
 } Resolution;
 
 typedef enum Color {
-    COLOR_NONE = -1,
     COLOR_ROSEWOOD = 0x660000,
     COLOR_CRIMSONRED = 0x990000,
     COLOR_ROSSOCORSA = 0xcc0000,
@@ -171,6 +178,6 @@ typedef struct SearchParameters {
         const Ratio *ratios;
         size_t color_count;
         const Color *colors;
-        unsigned int page;
+        size_t page;
         const char seed[7];
 } SearchParameters;

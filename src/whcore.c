@@ -76,21 +76,9 @@ void whapi_set_response_code_handler(response_code_handler handler) {
 }
 
 static bool default_response_code_handler(unsigned int response_code) {
+#ifdef WH_DEBUG
     printf("Response code: %u\n", response_code);
-    switch (response_code) {
-        case 200:
-            // OK
-            return false;
-        case 401:
-            // Unauthorized access
-            whapi.error_code = WALLHAVEN_API_KEY_ERROR,
-            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
-            return false;
-        case 429:
-            // API call limit
-            return true;
-        default:
-            break;
-    }
+#endif
+    (void)response_code;
     return false;
 }

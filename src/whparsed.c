@@ -16,9 +16,16 @@ bool whapi_get_wallpaper_info(const char *id, Wallpaper *wallpaper) {
                   whstr_destroy(&res));
 
     wallpaper->json = cJSON_ParseWithLength(res.str, res.len);
-    CHECKP_RETURN(wallpaper->json, false, whstr_destroy(&res);
-                  whapi.error_code = WALLHAVEN_PARSING_FAILED,
-                  whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
+    CHECKP_RETURN(
+        wallpaper->json, false, whstr_destroy(&res);
+        // if call limit exceed, then res have html instead of json, causing
+        // failure in parsing. In that case error is call limit exceed and
+        // not parsing failed.
+        if (whapi.error_code_type != ERROR_CODE_TYPE_WALLHAVEN
+            || whapi.error_code != WALLHAVEN_API_CALL_LIMIT_EXCEED) {
+            whapi.error_code = WALLHAVEN_PARSING_FAILED,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+        });
 
     CHECKB_RETURN(parse_wallpaper_info(wallpaper->json, wallpaper, false),
                   false, whstr_destroy(&res));
@@ -49,7 +56,7 @@ bool whapi_search(SearchParameters params, SearchResult *search_result) {
     return true;
 }
 
-bool whapi_get_tag_info(unsigned int id, Tag *tag) {
+bool whapi_get_tag_info(size_t id, Tag *tag) {
     *tag = (Tag){0};
 
     whStr res = whstr_create();
@@ -109,8 +116,8 @@ bool whapi_get_collections(const char *user_name, Collections *collections) {
     return true;
 }
 
-bool whapi_get_wallpapers_from_collection(const char *user_name,
-                                          unsigned int id, unsigned int purity,
+bool whapi_get_wallpapers_from_collection(const char *user_name, size_t id,
+                                          unsigned int purity,
                                           SearchResult *search_result) {
     *search_result = (SearchResult){0};
 

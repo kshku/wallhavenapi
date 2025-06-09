@@ -3,49 +3,13 @@
 // Global state
 whAPI whapi = {0};
 
-bool reset_url(void) {
-    CHECK_RETURN(whapi.error_code = curl_url_set(
-                     whapi.url, CURLUPART_URL, WALLHAVEN_URL, CURLU_URLENCODE),
-                 false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+static bool reset_url(void);
 
-    return true;
-}
+static bool append_query(const char *key, const char *value);
 
-bool append_query(const char *key, const char *value) {
-    whStr query = whstr_create();
-    CHECKB_RETURN(whstr_setf(&query, "%s=%s", key, value), false,
-                  whstr_destroy(&query));
+static bool concat_and_set_path(const char *p, const char *q);
 
-#ifdef WH_DEBUG
-    printf("Appending query: %s\n", query.str);
-#endif
-
-    CHECK_RETURN(
-        whapi.error_code = curl_url_set(whapi.url, CURLUPART_QUERY, query.str,
-                                        CURLU_APPENDQUERY | CURLU_URLENCODE),
-        false, whstr_destroy(&query);
-        whapi.error_code_type = ERROR_CODE_TYPE_URL);
-
-    whstr_destroy(&query);
-
-    return true;
-}
-
-bool concat_and_set_path(const char *p, const char *q) {
-    whStr path = whstr_create();
-
-    CHECKB_RETURN(whstr_set(&path, p), false, whstr_destroy(&path));
-    CHECKB_RETURN(whstr_append(&path, q), false, whstr_destroy(&path));
-
-    CHECK_RETURN(whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
-                                                 path.str, CURLU_URLENCODE),
-                 false, whstr_destroy(&path);
-                 whapi.error_code_type = ERROR_CODE_TYPE_URL);
-
-    whstr_destroy(&path);
-
-    return true;
-}
+static void set_response_code_error(unsigned int response_code);
 
 bool perform_call(void) {
 #ifdef WH_DEBUG
@@ -66,6 +30,7 @@ bool perform_call(void) {
                      whapi.curl, CURLINFO_RESPONSE_CODE, &response_code),
                  false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
 
+    set_response_code_error(response_code);
     whapi.retry = whapi.response_code_handler(response_code);
 
     return true;
@@ -109,7 +74,9 @@ static bool format_and_append_q(const Query *q) {
         }
     }
 
-    CHECKB_RETURN(append_query("q", query.str), false, whstr_destroy(&query));
+    if (query.str)
+        CHECKB_RETURN(append_query("q", query.str), false,
+                      whstr_destroy(&query));
 
     whstr_destroy(&query);
 
@@ -125,7 +92,7 @@ static bool format_and_append_categories(unsigned int categories) {
     // if (categories & CATEGORY_PEOPLE) cat[2] = '1';
 
     char cat[4] = {0};
-    for (int i = 2; i > -1; --i, categories >>= 1)
+    for (int i = 0; i < 3; ++i, categories >>= 1)
         cat[i] = (categories & 1) + '0';
 
     CHECKB_RETURN(append_query("categories", cat), false);
@@ -142,7 +109,7 @@ static bool format_and_append_purity(unsigned int purity) {
                       whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
     char pur[4] = {0};
-    for (int i = 2; i > -1; --i, purity >>= 1) pur[i] = (purity & 1) + '0';
+    for (int i = 0; i < 3; ++i, purity >>= 1) pur[i] = (purity & 1) + '0';
 
     CHECKB_RETURN(append_query("purity", pur), false);
 
@@ -258,8 +225,7 @@ static bool format_and_append_colors(const Color *colors, size_t n) {
     CHECKB_RETURN(whstr_setn(&col, buffer, len), false, whstr_destroy(&col));
 
     for (size_t i = 1; i < n; ++i) {
-        len = snprintf(buffer, 10, ",%06x", colors[i]);
-        CHECKB_RETURN(whstr_appendn(&col, buffer, len), false,
+        CHECKB_RETURN(whstr_appendf(&col, ",%06x", colors[i]), false,
                       whstr_destroy(&col));
     }
 
@@ -270,11 +236,11 @@ static bool format_and_append_colors(const Color *colors, size_t n) {
     return true;
 }
 
-static bool format_and_append_page(unsigned int page) {
+static bool format_and_append_page(size_t page) {
     if (page == 0) return true;
 
-    char buffer[20];
-    snprintf(buffer, 20, "%u", page);
+    char buffer[25];
+    snprintf(buffer, 25, "%zu", page);
 
     CHECKB_RETURN(append_query("page", buffer), false);
 
@@ -313,13 +279,16 @@ static bool format_and_append_search_parameters(
     CHECKB_RETURN(format_and_append_toprange(params->toprange, params->sorting),
                   false);
 
-    CHECKB_RETURN(
-        format_and_append_atleast_resolution(params->atleast_resolution),
-        false);
-    CHECKB_RETURN(
-        format_and_append_exact_resolution(params->exact_resolutions,
-                                           params->exact_resolution_count),
-        false);
+    if (!params->exact_resolution_count) {
+        CHECKB_RETURN(
+            format_and_append_atleast_resolution(params->atleast_resolution),
+            false);
+    } else {
+        CHECKB_RETURN(
+            format_and_append_exact_resolution(params->exact_resolutions,
+                                               params->exact_resolution_count),
+            false);
+    }
 
     CHECKB_RETURN(format_and_append_ratios(params->ratios, params->ratio_count),
                   false);
@@ -363,7 +332,7 @@ bool setup_search_url(const SearchParameters *params) {
     return true;
 }
 
-bool setup_tag_info_url(unsigned int id) {
+bool setup_tag_info_url(size_t id) {
     CHECKB_RETURN(reset_url(), false);
 
     whStr temp = whstr_create();
@@ -418,7 +387,7 @@ bool setup_collections_url(const char *user_name) {
     return true;
 }
 
-bool setup_wallpaper_from_collection_url(const char *user_name, unsigned int id,
+bool setup_wallpaper_from_collection_url(const char *user_name, size_t id,
                                          unsigned int purity) {
     CHECKP_RETURN(user_name, false, whapi.error_code = WALLHAVEN_NULL_USER_NAME,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
@@ -440,4 +409,72 @@ bool setup_wallpaper_from_collection_url(const char *user_name, unsigned int id,
     format_and_append_purity(purity);
 
     return true;
+}
+
+static bool reset_url(void) {
+    CHECK_RETURN(whapi.error_code = curl_url_set(
+                     whapi.url, CURLUPART_URL, WALLHAVEN_URL, CURLU_URLENCODE),
+                 false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    return true;
+}
+
+static bool append_query(const char *key, const char *value) {
+    whStr query = whstr_create();
+    CHECKB_RETURN(whstr_setf(&query, "%s=%s", key, value), false,
+                  whstr_destroy(&query));
+
+    CHECK_RETURN(
+        whapi.error_code = curl_url_set(whapi.url, CURLUPART_QUERY, query.str,
+                                        CURLU_APPENDQUERY | CURLU_URLENCODE),
+        false, whstr_destroy(&query);
+        whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    whstr_destroy(&query);
+
+    return true;
+}
+
+static bool concat_and_set_path(const char *p, const char *q) {
+    whStr path = whstr_create();
+
+    CHECKB_RETURN(whstr_set(&path, p), false, whstr_destroy(&path));
+    CHECKB_RETURN(whstr_append(&path, q), false, whstr_destroy(&path));
+
+    CHECK_RETURN(whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
+                                                 path.str, CURLU_URLENCODE),
+                 false, whstr_destroy(&path);
+                 whapi.error_code_type = ERROR_CODE_TYPE_URL);
+
+    whstr_destroy(&path);
+
+    return true;
+}
+
+static void set_response_code_error(unsigned int response_code) {
+    switch (response_code) {
+        case 200:
+            // OK
+            break;
+        case 401:
+            whapi.error_code = WALLHAVEN_UNAUTHORIZED_ACCESS,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+            break;
+        case 429:
+            whapi.error_code = WALLHAVEN_API_CALL_LIMIT_EXCEED,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+            break;
+        case 404:
+            whapi.error_code = WALLHAVEN_NOTHING_IS_HERE,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+            break;
+        case 400:
+            whapi.error_code = WALLHAVEN_BAD_REQUEST,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+            break;
+        default:
+            whapi.error_code = WALLHAVEN_UNKNOWN_ERROR,
+            whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+            break;
+    }
 }

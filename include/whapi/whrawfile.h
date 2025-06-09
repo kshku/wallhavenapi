@@ -35,7 +35,7 @@ WH_API bool whapi_search_raw_to_file(SearchParameters params, const char *file);
  *
  * @return Returns false on failure.
  */
-WH_API bool whapi_get_tag_info_raw_to_file(unsigned int id, const char *file);
+WH_API bool whapi_get_tag_info_raw_to_file(size_t id, const char *file);
 
 /**
  * @brief Get the user settings.
@@ -77,5 +77,4 @@ WH_API bool whapi_get_collections_raw_to_file(const char *user_name,
  * @return Returns false on failure.
  */
 WH_API bool whapi_get_wallpapers_from_collection_raw_to_file(
-    const char *user_name, unsigned int id, unsigned int purity,
-    const char *file);
+    const char *user_name, size_t id, unsigned int purity, const char *file);

@@ -165,8 +165,8 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
 
     search_result->wallpaper_count = cJSON_GetArraySize(data);
 
-    search_result->wallpapers = (Wallpaper *)calloc(
-        search_result->wallpaper_count, search_result->wallpaper_count);
+    search_result->wallpapers =
+        (Wallpaper *)calloc(search_result->wallpaper_count, sizeof(Wallpaper));
     CHECKP_RETURN(search_result->wallpapers, false,
                   whapi_destroy_search_result(search_result));
 
@@ -178,12 +178,14 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
         CHECKB_RETURN(parse_wallpaper_info(wallpaper,
                                            &search_result->wallpapers[i], true),
                       false, whapi_destroy_search_result(search_result));
+        ++i;
     }
 
     cJSON *meta = cJSON_GetObjectItemCaseSensitive(json, "meta");
     CHECKB_RETURN(cJSON_IsObject(meta), false,
                   whapi_destroy_search_result(search_result));
 
+    // sometimes the per_page is number and sometimes it is string
     KeyNumVar keynumvars[] = {
         {.key = "current_page",
          .psize_t = &search_result->current_page,
@@ -191,19 +193,24 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
         {   .key = "last_page",
          .psize_t = &search_result->last_page,
          .type = SIZE_T                                                         },
-        {    .key = "per_page",
-         .psize_t = &search_result->per_page,
-         .type = SIZE_T                                                         },
         {       .key = "total", .psize_t = &search_result->total, .type = SIZE_T},
     };
 
+    CHECKB_RETURN(
+        parse_key_num_vars(meta, keynumvars,
+                           (sizeof(keynumvars) / sizeof(keynumvars[0]))),
+        false, whapi_destroy_search_result(search_result));
+
+    cJSON *per_page = cJSON_GetObjectItemCaseSensitive(meta, "per_page");
+    if (cJSON_IsString(per_page))
+        sscanf(per_page->valuestring, "%zu", &search_result->per_page);
+    else if (cJSON_IsNumber(per_page))
+        search_result->per_page = (size_t)per_page->valuedouble;
+    else
+        CHECKB_RETURN(false, false, whapi_destroy_search_result(search_result));
+
     if (!collection) {
         KeyStrVar seed = {.key = "seed", .var = &search_result->seed};
-
-        CHECKB_RETURN(
-            parse_key_num_vars(meta, keynumvars,
-                               (sizeof(keynumvars) / sizeof(keynumvars[0]))),
-            false, whapi_destroy_search_result(search_result));
 
         CHECKB_RETURN(parse_key_string_vars(meta, &seed, 1), false,
                       whapi_destroy_search_result(search_result));
@@ -250,7 +257,7 @@ bool parse_settings(cJSON *json, Settings *settings) {
                               (sizeof(keystrvars) / sizeof(keystrvars[0]))),
         false, whapi_destroy_settings(settings));
 
-    sscanf(buf, "%lu", &settings->per_page);
+    sscanf(buf, "%zu", &settings->per_page);
 
     CHECKB_RETURN(parse_purities(data, &settings->purity), false,
                   whapi_destroy_settings(settings));
@@ -315,10 +322,11 @@ static bool parse_key_string_vars(cJSON *json, KeyStrVar *keystrvars,
     for (size_t i = 0; i < len; ++i) {
         cJSON *item = cJSON_GetObjectItemCaseSensitive(json, keystrvars[i].key);
 
-        CHECKB_RETURN(cJSON_IsString(item) && (item->valuestring != NULL),
+        CHECKB_RETURN((cJSON_IsString(item) && (item->valuestring != NULL))
+                          || cJSON_IsNull(item),
                       false);
 
-        *keystrvars[i].var = item->valuestring;
+        *keystrvars[i].var = cJSON_IsString(item) ? item->valuestring : NULL;
     }
 
     return true;
@@ -485,11 +493,10 @@ static bool parse_purities(cJSON *json, unsigned int *purity) {
     cJSON_ArrayForEach(p, pty) {
         CHECKB_RETURN(cJSON_IsString(p), false);
 
-        if ((!((*purity) & PURITY_SFW))
-            && (!strncmp(pty->valuestring, "sfw", 3)))
+        if ((!((*purity) & PURITY_SFW)) && (!strncmp(p->valuestring, "sfw", 3)))
             *purity |= PURITY_SFW;
         else if ((!((*purity) & PURITY_NSFW))
-                 && (!strncmp(pty->valuestring, "nsfw", 4)))
+                 && (!strncmp(p->valuestring, "nsfw", 4)))
             *purity |= PURITY_NSFW;
         else *purity |= PURITY_SKETCHY;
     }
@@ -508,10 +515,10 @@ static bool parse_categories(cJSON *json, unsigned int *categories) {
         CHECKB_RETURN(cJSON_IsString(c), false);
 
         if ((!((*categories) & CATEGORY_ANIME))
-            && (!strncmp(ctg->valuestring, "anime", 5)))
+            && (!strncmp(c->valuestring, "anime", 5)))
             *categories |= CATEGORY_ANIME;
         else if ((!((*categories) & CATEGORY_PEOPLE))
-                 && (!strncmp(ctg->valuestring, "people", 6)))
+                 && (!strncmp(c->valuestring, "people", 6)))
             *categories |= CATEGORY_PEOPLE;
         else *categories |= CATEGORY_GENERAL;
     }
@@ -572,12 +579,12 @@ static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
     CHECKB_RETURN(cJSON_IsArray(items), false);
     *count = cJSON_GetArraySize(items);
 
-    *rrs = (Resolution *)malloc((*count) * sizeof(Resolution));
+    *rrs = (Resolution *)calloc((*count), sizeof(Resolution));
 
     size_t i = 0;
     cJSON *item;
     cJSON_ArrayForEach(item, items) {
-        CHECKB_RETURN(cJSON_IsString(item), false);
+        CHECKB_RETURN(cJSON_IsString(item) && item->valuestring != NULL, false);
         sscanf(item->valuestring, "%ux%u", &((*rrs)[i]).width,
                &((*rrs)[i]).height);
         ++i;

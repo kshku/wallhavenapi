@@ -28,7 +28,7 @@ bool whstr_setn(whStr *whstr, const char *str, size_t len) {
 
     // Copy the string
     whstr->len = len;
-    strncpy(whstr->str, str, len);
+    strncpy(whstr->str, str, whstr->size);
     whstr->str[whstr->len] = 0;
 
     return true;

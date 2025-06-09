@@ -163,7 +163,7 @@ WH_API bool whapi_search(SearchParameters params, SearchResult *search_result);
  *
  * @return Returns false on failure.
  */
-WH_API bool whapi_get_tag_info(unsigned int id, Tag *tag);
+WH_API bool whapi_get_tag_info(size_t id, Tag *tag);
 
 /**
  * @brief Get the user settings.
@@ -205,8 +205,7 @@ WH_API bool whapi_get_collections(const char *user_name,
  * @return Returns false on failure.
  */
 WH_API bool whapi_get_wallpapers_from_collection(const char *user_name,
-                                                 unsigned int id,
-                                                 unsigned int purity,
+                                                 size_t id, unsigned int purity,
                                                  SearchResult *search_result);
 
 /**

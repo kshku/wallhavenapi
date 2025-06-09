@@ -51,7 +51,7 @@ bool whapi_search_raw(SearchParameters params, whStr *res) {
     return setup_and_fetch_data(res);
 }
 
-bool whapi_get_tag_info_raw(unsigned int id, whStr *res) {
+bool whapi_get_tag_info_raw(size_t id, whStr *res) {
     assert(whapi.initialized);
 
     CHECKB_RETURN(setup_tag_info_url(id), false);
@@ -75,8 +75,7 @@ bool whapi_get_collections_raw(const char *user_name, whStr *res) {
     return setup_and_fetch_data(res);
 }
 
-bool whapi_get_wallpapers_from_collection_raw(const char *user_name,
-                                              unsigned int id,
+bool whapi_get_wallpapers_from_collection_raw(const char *user_name, size_t id,
                                               unsigned int purity, whStr *res) {
     assert(whapi.initialized);
 

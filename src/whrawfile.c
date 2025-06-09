@@ -53,7 +53,7 @@ bool whapi_search_raw_to_file(SearchParameters params, const char *file) {
     return setup_and_fetch_data(file);
 }
 
-bool whapi_get_tag_info_raw_to_file(unsigned int id, const char *file) {
+bool whapi_get_tag_info_raw_to_file(size_t id, const char *file) {
     assert(whapi.initialized);
 
     CHECKB_RETURN(setup_tag_info_url(id), false);
@@ -79,7 +79,7 @@ bool whapi_get_collections_raw_to_file(const char *user_name,
 }
 
 bool whapi_get_wallpapers_from_collection_raw_to_file(const char *user_name,
-                                                      unsigned int id,
+                                                      size_t id,
                                                       unsigned int purity,
                                                       const char *file) {
     assert(whapi.initialized);
