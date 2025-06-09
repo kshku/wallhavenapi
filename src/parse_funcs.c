@@ -5,15 +5,21 @@
 
 #include "whcommon.h"
 
+/**
+ * @brief Key and pointer to string variable.
+ */
 typedef struct KeyStrVar {
         const char *key;
         const char **var;
 } KeyStrVar;
 
+/**
+ * @brief Key and pointer to number variable.
+ */
 typedef struct KeyNumVar {
         const char *key;
 
-        enum { UNSIGNED_INT, SIZE_T } type;
+        enum { UNSIGNED_INT, SIZE_T } type; /**< Type of the number */
 
         union {
                 unsigned int *puint;

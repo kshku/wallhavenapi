@@ -6,7 +6,7 @@
 /**
  * @brief Get the wallpaper info.
  *
- * If apikey is set, uses it.
+ * Uses apikey if set.
  *
  * @param id The wallpaper id
  * @param res Pointer to whStr, where the response is written
@@ -18,7 +18,7 @@ WH_API bool whapi_get_wallpaper_info_raw(const char *id, whStr *res);
 /**
  * @brief Search.
  *
- * If apikey is set uses it.
+ * Uses apikey if set.
  *
  * @param params SearchParameters
  * @param res Pointer to whStr, where the response is written

@@ -127,14 +127,14 @@ static const char *test_user_name = "SOME_USER";
 static const size_t test_user_collection_id =
     0;  // Id of one of that user's collection
 
-#ifdef WIN32
+#ifdef WH_WINDOWS
     #include <windows.h>
 #else
     #include <unistd.h>
 #endif
 
 static void sleep_ms(int milliseconds) {
-#ifdef WIN32
+#ifdef WH_WINDOWS
     Sleep(milliseconds);
 #else
     usleep(milliseconds * 1000);

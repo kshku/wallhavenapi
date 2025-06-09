@@ -6,13 +6,13 @@
  * @brief To manage strings.
  */
 typedef struct whStr {
-        char *str;
-        size_t size;
-        size_t len;
+        char *str; /**< Pointer to string */
+        size_t size; /**< Size allocated */
+        size_t len; /**< Length of the string */
 } whStr;
 
 /**
- * @brief Create whStr (Just initialize things to 0 or NULL).
+ * @brief Create whStr (Just initialize to 0 or NULL).
  *
  * @return Returns initialized whStr
  */
@@ -44,7 +44,7 @@ WH_API bool whstr_set(whStr *whstr, const char *str);
 WH_API bool whstr_setn(whStr *whstr, const char *str, size_t len);
 
 /**
- * @brief Set the string of given length (Can call multiple times).
+ * @brief Set the string after formating (Can call multiple times).
  *
  * This function will allocate memory as requried.
  *
@@ -89,7 +89,7 @@ WH_API bool whstr_append(whStr *whstr, const char *str);
 WH_API bool whstr_appendn(whStr *whstr, const char *str, size_t len);
 
 /**
- * @brief Append string of given length.
+ * @brief Append string after formating.
  *
  * Allocation is handled.
  *
@@ -103,6 +103,8 @@ WH_API bool whstr_appendf(whStr *whstr, const char *fmt, ...);
 
 /**
  * @brief Clear the string.
+ *
+ * Doesn't deallocate.
  *
  * @param whstr Pointer to whStr
  */

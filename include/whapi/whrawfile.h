@@ -5,7 +5,7 @@
 /**
  * @brief Get the wallpaper info and write to file.
  *
- * If apikey is set, uses it.
+ * Uses apikey if set.
  *
  * @param id The wallpaper id
  * @param file Path to file
@@ -18,7 +18,7 @@ WH_API bool whapi_get_wallpaper_info_raw_to_file(const char *id,
 /**
  * @brief Search.
  *
- * If apikey is set uses it.
+ * Uses apikey if set.
  *
  * @param params SearchParameters
  * @param file Path to file

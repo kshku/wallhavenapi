@@ -3,138 +3,167 @@
 #include "whapi/whcore.h"
 #include "whapi/whstr.h"
 
-typedef struct cJSON cJSON;
+typedef struct cJSON cJSON;  // Internal
 
+/**
+ * @brief Tag info.
+ */
 typedef struct Tag {
-        size_t id;
-        const char *name;
-        const char *alias;
-        size_t category_id;
-        const char *category;
-        Purity purity;
-        const char *created_at;
-        cJSON *json;
+        size_t id; /**< Tag id */
+        const char *name; /**< Tag name */
+        const char *alias; /**< Tag aliases */
+        size_t category_id; /**< Tag category id */
+        const char *category; /**< Category */
+        Purity purity; /**< Purtiy */
+        const char *created_at; /**< created timestamp */
+        cJSON *json; /**< Internal */
 } Tag;
 
+/**
+ * @brief Settings info.
+ */
 typedef struct Settings {
-        const char *thumb_size;
-        size_t per_page;
-        unsigned int purity;
-        unsigned int categories;
+        const char *thumb_size; /**< Thumb size */
+        size_t per_page; /**< Images per page */
+        unsigned int purity; /**< Purity */
+        unsigned int categories; /**< Categories */
 
-        TopRange toplist_range;
+        TopRange toplist_range; /**< Toplist range */
 
-        size_t resolution_count;
-        Resolution *resolutions;
+        size_t resolution_count; /**< Number of resoulutions */
+        Resolution *resolutions; /**< Array of resolutions */
 
-        size_t aspect_ratio_count;
-        Ratio *aspect_ratios;
+        size_t aspect_ratio_count; /**< Number of aspect ratio */
+        Ratio *aspect_ratios; /**< Array of aspect ratio */
 
-        size_t tag_blacklist_count;
-        const char **tag_blacklist;
+        size_t tag_blacklist_count; /**< Number of blacklisted tags */
+        const char **tag_blacklist; /**< Array of blacklisted tags */
 
-        size_t user_blacklist_count;
-        const char **user_blacklist;
+        size_t user_blacklist_count; /**< Number of blacklisted users */
+        const char **user_blacklist; /**< Array of blacklisted users */
 
-        cJSON *json;
+        cJSON *json; /**< Internal */
 } Settings;
 
+/**
+ * @brief Image thumbs.
+ */
 typedef struct Thumbs {
         const char *large;
         const char *original;
         const char *small;
 } Thumbs;
 
+/**
+ * @brief User info.
+ */
 typedef struct User {
-        const char *user_name;
-        const char *group;
-        const char *avatar200px;
-        const char *avatar128px;
-        const char *avatar32px;
-        const char *avatar20px;
+        const char *user_name; /**< User name */
+        const char *group; /**< Group to which user belongs to */
+        const char *avatar200px; /**< Avatar image 200px */
+        const char *avatar128px; /**< Avatar image 128px */
+        const char *avatar32px; /**< Avatar image 32px */
+        const char *avatar20px; /**< Avatar image 20px */
 } User;
 
+/**
+ * @brief Wallpaper info.
+ */
 typedef struct Wallpaper {
-        const char *id;
-        const char *url;
-        const char *short_url;
+        const char *id; /**< Wallpaper id */
+        const char *url; /**< Wallpaper url */
+        const char *short_url; /**< Wallpaper short url */
 
-        User uploader;
+        User uploader; /**< The uploader */
 
-        size_t views;
-        size_t favorites;
+        size_t views; /**< Number of views */
+        size_t favorites; /**< Favorites */
 
-        const char *source;
+        const char *source; /**< Source */
 
-        Purity purity;
-        Category category;
+        Purity purity; /**< Purity */
+        Category category; /**< Category */
 
-        Resolution resolution;
-        float ratio;
+        Resolution resolution; /**< Resolution */
+        float ratio; /**< Ratio in fraction */
 
-        size_t file_size;
-        ImageType type;
+        size_t file_size; /**< Image size */
+        ImageType type; /**< Image typ */
 
-        const char *created_at;
+        const char *created_at; /**< Created at time stamp */
 
-        size_t color_count;
-        Color *colors;
+        size_t color_count; /**< Number of colors */
+        Color *colors; /**< Array of colors */
 
-        const char *path;
+        const char *path; /**< Image path */
 
-        Thumbs thumbs;
+        Thumbs thumbs; /**< Thumbs */
 
-        size_t tag_count;
-        Tag *tags;
+        size_t tag_count; /**< Number of tags */
+        Tag *tags; /**< Array of tags */
 
-        cJSON *json;
+        cJSON *json; /**< Internal */
 } Wallpaper;
 
+/**
+ * @brief Search result.
+ */
 typedef struct SearchResult {
-        size_t wallpaper_count;
-        Wallpaper *wallpapers;
+        size_t wallpaper_count; /**< Number of wallpapers */
+        Wallpaper *wallpapers; /**< Array of wallpapers */
 
-        size_t current_page;
-        size_t last_page;
-        size_t per_page;
-        size_t total;
-        const char *seed;
+        size_t current_page; /**< Current page */
+        size_t last_page; /**< Last page */
+        size_t per_page; /**< Per page wallpapers */
+        size_t total; /**< Total wallpapers */
+        const char *seed; /**< Seed (if sorting is random) */
 
         struct {
                 union {
-                        const char *query;
+                        const char *query; /**< Query */
 
                         struct {
-                                size_t id;
-                                const char *tag;
+                                size_t id; /**< Tag id in case of exact tag
+                                              search */
+                                const char *tag; /**< Tag name in case of exact
+                                                    tag search */
                         };
                 };
 
-                enum { NORMAL_SEARCH, EXACT_TAG_SEARCH } type;
+                enum {
+                    NORMAL_SEARCH,
+                    EXACT_TAG_SEARCH
+                } type; /**< Search type Normal or exact tag search */
         };
 
-        cJSON *json;
+        cJSON *json; /**< Internal */
 } SearchResult;
 
+/**
+ * @brief Collection info.
+ */
 typedef struct Collection {
-        size_t id;
-        const char *label;
-        size_t views;
-        bool public;
-        size_t count;
+        size_t id; /**< Collection id */
+        const char *label; /**< Collection name */
+        size_t views; /**< Number of views */
+        bool public; /**< Is public? */
+        size_t count; /**< Number of wallpapers in the collection */
 } Collection;
 
+/**
+ * @brief Collections, just array of Collection.
+ */
 typedef struct Collections {
-        size_t collection_count;
-        Collection *collections;
+        size_t collection_count; /**< Number of collection */
+        Collection *collections; /**< Array of collections */
 
-        cJSON *json;
+        cJSON *json; /**< Internal */
 } Collections;
 
 /**
  * @brief Get the wallpaper info.
  *
- * If apikey is set, uses it.
+ * Uses apikey if set.
  *
  * @param id The wallpaper id
  * @param wallpaper Pointer to wallpaper
@@ -146,7 +175,7 @@ WH_API bool whapi_get_wallpaper_info(const char *id, Wallpaper *wallpaper);
 /**
  * @brief Search.
  *
- * If apikey is set uses it.
+ * Uses apikey if set.
  *
  * @param params SearchParameters
  * @param search_result Pointer to SearchResult
@@ -209,35 +238,35 @@ WH_API bool whapi_get_wallpapers_from_collection(const char *user_name,
                                                  SearchResult *search_result);
 
 /**
- * @brief Destroy the Tag returned.
+ * @brief Destroy the Tag.
  *
  * @param tag Pointer to tag
  */
 WH_API void whapi_destroy_tag(Tag *tag);
 
 /**
- * @brief Destroy the Settings returned.
+ * @brief Destroy the Settings.
  *
  * @param settings Pointer to settings
  */
 WH_API void whapi_destroy_settings(Settings *settings);
 
 /**
- * @brief Destroy the wallpaper returned.
+ * @brief Destroy the wallpaper.
  *
  * @param wallpaper Pointer to wallpaper
  */
 WH_API void whapi_destroy_wallpaper(Wallpaper *wallpaper);
 
 /**
- * @brief Destroy the search result returned.
+ * @brief Destroy the search result.
  *
  * @param search_result Pointer to the search result
  */
 WH_API void whapi_destroy_search_result(SearchResult *search_result);
 
 /**
- * @brief Destroy the collections returned.
+ * @brief Destroy the collections.
  *
  * @param collections Pointer to the collections
  */
