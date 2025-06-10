@@ -41,8 +41,8 @@ void print_wallpaper(Wallpaper *wallpaper) {
     }
     printf("path: \"%s\"\n", wallpaper->path);
     printf("thumbs:\n\tlarge: \"%s\"\n\toriginal: \"%s\"\n\tsmall: \"%s\"\n",
-           wallpaper->thumbs.large, wallpaper->thumbs.original,
-           wallpaper->thumbs.small);
+           wallpaper->thumbs.large_size, wallpaper->thumbs.original_size,
+           wallpaper->thumbs.small_size);
     printf("tag_count: \"%zu\"\n", wallpaper->tag_count);
     for (size_t i = 0; i < wallpaper->tag_count; ++i) {
         printf("tag[%zu]:\n", i);
@@ -191,4 +191,6 @@ int test_parsed(const char *user, const char *apikey) {
     }
 
     whapi_shutdown();
+
+    return 0;
 }

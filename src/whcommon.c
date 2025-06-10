@@ -95,7 +95,7 @@ static bool format_and_append_categories(unsigned int categories) {
     for (int i = 0; i < 3; ++i, categories >>= 1)
         cat[i] = (categories & 1) + '0';
 
-    CHECKB_RETURN(append_query("categories", cat), false);
+    CHECKB_RETURN(append_query("categories", cat), false, (void)0);
 
     return true;
 }
@@ -111,7 +111,7 @@ static bool format_and_append_purity(unsigned int purity) {
     char pur[4] = {0};
     for (int i = 0; i < 3; ++i, purity >>= 1) pur[i] = (purity & 1) + '0';
 
-    CHECKB_RETURN(append_query("purity", pur), false);
+    CHECKB_RETURN(append_query("purity", pur), false, (void)0);
 
     return true;
 }
@@ -124,7 +124,7 @@ static bool format_and_append_sorting(Sorting sorting) {
         [SORTING_RANDOM] = "random",         [SORTING_VIEWS] = "views",
         [SORTING_FAVORITES] = "favorites",   [SORTING_TOPLIST] = "toplist"};
 
-    CHECKB_RETURN(append_query("sorting", sor[sorting]), false);
+    CHECKB_RETURN(append_query("sorting", sor[sorting]), false, (void)0);
 
     return true;
 }
@@ -134,7 +134,7 @@ static bool format_and_append_order(Order order) {
 
     char *ord[] = {[ORDER_ASCENDING] = "asc", [ORDER_DESCENDING] = "desc"};
 
-    CHECKB_RETURN(append_query("order", ord[order]), false);
+    CHECKB_RETURN(append_query("order", ord[order]), false, (void)0);
 
     return true;
 }
@@ -153,7 +153,7 @@ static bool format_and_append_toprange(TopRange toprange, Sorting sorting) {
         [TOPRANGE_1M] = "1M", [TOPRANGE_3M] = "3M", [TOPRANGE_6M] = "6M",
         [TOPRANGE_1Y] = "1y"};
 
-    CHECKB_RETURN(append_query("topRange", top[toprange]), false);
+    CHECKB_RETURN(append_query("topRange", top[toprange]), false, (void)0);
 
     return true;
 }
@@ -165,7 +165,7 @@ static bool format_and_append_atleast_resolution(Resolution res) {
 
     snprintf(buffer, 20, "%ux%u", res.width, res.height);
 
-    CHECKB_RETURN(append_query("atleast", buffer), false);
+    CHECKB_RETURN(append_query("atleast", buffer), false, (void)0);
 
     return true;
 }
@@ -242,7 +242,7 @@ static bool format_and_append_page(size_t page) {
     char buffer[25];
     snprintf(buffer, 25, "%zu", page);
 
-    CHECKB_RETURN(append_query("page", buffer), false);
+    CHECKB_RETURN(append_query("page", buffer), false, (void)0);
 
     return true;
 }
@@ -259,46 +259,47 @@ static bool format_and_append_seed(const char seed[7]) {
         }
     }
 
-    CHECKB_RETURN(append_query("seed", seed), false);
+    CHECKB_RETURN(append_query("seed", seed), false, (void)0);
 
     return true;
 }
 
 static bool format_and_append_search_parameters(
     const SearchParameters *params) {
-    CHECKB_RETURN(format_and_append_q(&params->q), false);
+    CHECKB_RETURN(format_and_append_q(&params->q), false, (void)0);
 
-    CHECKB_RETURN(format_and_append_categories(params->categories), false);
+    CHECKB_RETURN(format_and_append_categories(params->categories), false,
+                  (void)0);
 
-    CHECKB_RETURN(format_and_append_purity(params->purity), false);
+    CHECKB_RETURN(format_and_append_purity(params->purity), false, (void)0);
 
-    CHECKB_RETURN(format_and_append_sorting(params->sorting), false);
+    CHECKB_RETURN(format_and_append_sorting(params->sorting), false, (void)0);
 
-    CHECKB_RETURN(format_and_append_order(params->order), false);
+    CHECKB_RETURN(format_and_append_order(params->order), false, (void)0);
 
     CHECKB_RETURN(format_and_append_toprange(params->toprange, params->sorting),
-                  false);
+                  false, (void)0);
 
     if (!params->exact_resolution_count) {
         CHECKB_RETURN(
             format_and_append_atleast_resolution(params->atleast_resolution),
-            false);
+            false, (void)0);
     } else {
         CHECKB_RETURN(
             format_and_append_exact_resolution(params->exact_resolutions,
                                                params->exact_resolution_count),
-            false);
+            false, (void)0);
     }
 
     CHECKB_RETURN(format_and_append_ratios(params->ratios, params->ratio_count),
-                  false);
+                  false, (void)0);
 
     CHECKB_RETURN(format_and_append_colors(params->colors, params->color_count),
-                  false);
+                  false, (void)0);
 
-    CHECKB_RETURN(format_and_append_page(params->page), false);
+    CHECKB_RETURN(format_and_append_page(params->page), false, (void)0);
 
-    CHECKB_RETURN(format_and_append_seed(params->seed), false);
+    CHECKB_RETURN(format_and_append_seed(params->seed), false, (void)0);
 
     return true;
 }
@@ -307,33 +308,33 @@ bool setup_wallpaper_info_url(const char *id) {
     CHECKP_RETURN(id, false, whapi.error_code = WALLHAVEN_NULL_ID,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
-    CHECKB_RETURN(reset_url(), false);
+    CHECKB_RETURN(reset_url(), false, (void)0);
 
-    CHECKB_RETURN(concat_and_set_path(WALLPAPER_INFO_PATH, id), false);
+    CHECKB_RETURN(concat_and_set_path(WALLPAPER_INFO_PATH, id), false, (void)0);
 
     if (whapi.apikey.str)
-        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false, (void)0);
 
     return true;
 }
 
 bool setup_search_url(const SearchParameters *params) {
-    CHECKB_RETURN(reset_url(), false);
+    CHECKB_RETURN(reset_url(), false, (void)0);
 
     CHECK_RETURN(whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
                                                  SEARCH_PATH, CURLU_URLENCODE),
                  false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
 
     if (whapi.apikey.str)
-        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false, (void)0);
 
-    CHECKB_RETURN(format_and_append_search_parameters(params), false);
+    CHECKB_RETURN(format_and_append_search_parameters(params), false, (void)0);
 
     return true;
 }
 
 bool setup_tag_info_url(size_t id) {
-    CHECKB_RETURN(reset_url(), false);
+    CHECKB_RETURN(reset_url(), false, (void)0);
 
     whStr temp = whstr_create();
 
@@ -352,14 +353,14 @@ bool setup_settings_url(void) {
                   whapi.error_code = WALLHAVEN_NO_API_KEY,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
-    CHECKB_RETURN(reset_url(), false);
+    CHECKB_RETURN(reset_url(), false, (void)0);
 
     CHECK_RETURN(
         whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
                                         USER_SETTINGS_PATH, CURLU_URLENCODE),
         false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
 
-    CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+    CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false, (void)0);
 
     return true;
 }
@@ -369,19 +370,20 @@ bool setup_collections_url(const char *user_name) {
                   whapi.error_code = WALLHAVEN_NO_API_KEY,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
-    CHECKB_RETURN(reset_url(), false);
+    CHECKB_RETURN(reset_url(), false, (void)0);
 
     if (user_name) {
         CHECKB_RETURN(concat_and_set_path(COLLECTIONS_PATH "/", user_name),
-                      false);
+                      false, (void)0);
         if (whapi.apikey.str)
-            CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+            CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false,
+                          (void)0);
     } else {
         CHECK_RETURN(
             whapi.error_code = curl_url_set(whapi.url, CURLUPART_PATH,
                                             COLLECTIONS_PATH, CURLU_URLENCODE),
             false, whapi.error_code_type = ERROR_CODE_TYPE_URL);
-        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false);
+        CHECKB_RETURN(append_query("apikey", whapi.apikey.str), false, (void)0);
     }
 
     return true;
@@ -392,7 +394,7 @@ bool setup_wallpaper_from_collection_url(const char *user_name, size_t id,
     CHECKP_RETURN(user_name, false, whapi.error_code = WALLHAVEN_NULL_USER_NAME,
                   whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN);
 
-    CHECKB_RETURN(reset_url(), false);
+    CHECKB_RETURN(reset_url(), false, (void)0);
 
     whStr unid = whstr_create();
 

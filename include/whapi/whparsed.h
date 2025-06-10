@@ -49,9 +49,11 @@ typedef struct Settings {
  * @brief Image thumbs.
  */
 typedef struct Thumbs {
-        const char *large;
-        const char *original;
-        const char *small;
+        const char *large_size;
+        const char *original_size;
+        // rpcndr.h has #define small char which is conflicting with the Thumbs
+        // struct member small in windows
+        const char *small_size;
 } Thumbs;
 
 /**

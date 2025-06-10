@@ -29,7 +29,7 @@ static bool setup_and_fetch_data(const char *filename) {
                          whapi.curl, CURLOPT_WRITEDATA, (void *)file),
                      false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
 
-        CHECKB_RETURN(perform_call(), false);
+        CHECKB_RETURN(perform_call(), false, (void)0);
 
         fclose(file);
     } while (whapi.retry);
@@ -40,7 +40,7 @@ static bool setup_and_fetch_data(const char *filename) {
 bool whapi_get_wallpaper_info_raw_to_file(const char *id, const char *file) {
     assert(whapi.initialized);
 
-    CHECKB_RETURN(setup_wallpaper_info_url(id), false);
+    CHECKB_RETURN(setup_wallpaper_info_url(id), false, (void)0);
 
     return setup_and_fetch_data(file);
 }
@@ -48,7 +48,7 @@ bool whapi_get_wallpaper_info_raw_to_file(const char *id, const char *file) {
 bool whapi_search_raw_to_file(SearchParameters params, const char *file) {
     assert(whapi.initialized);
 
-    CHECKB_RETURN(setup_search_url(&params), false);
+    CHECKB_RETURN(setup_search_url(&params), false, (void)0);
 
     return setup_and_fetch_data(file);
 }
@@ -56,7 +56,7 @@ bool whapi_search_raw_to_file(SearchParameters params, const char *file) {
 bool whapi_get_tag_info_raw_to_file(size_t id, const char *file) {
     assert(whapi.initialized);
 
-    CHECKB_RETURN(setup_tag_info_url(id), false);
+    CHECKB_RETURN(setup_tag_info_url(id), false, (void)0);
 
     return setup_and_fetch_data(file);
 }
@@ -64,7 +64,7 @@ bool whapi_get_tag_info_raw_to_file(size_t id, const char *file) {
 bool whapi_get_settings_raw_to_file(const char *file) {
     assert(whapi.initialized);
 
-    CHECKB_RETURN(setup_settings_url(), false);
+    CHECKB_RETURN(setup_settings_url(), false, (void)0);
 
     return setup_and_fetch_data(file);
 }
@@ -73,7 +73,7 @@ bool whapi_get_collections_raw_to_file(const char *user_name,
                                        const char *file) {
     assert(whapi.initialized);
 
-    CHECKB_RETURN(setup_collections_url(user_name), false);
+    CHECKB_RETURN(setup_collections_url(user_name), false, (void)0);
 
     return setup_and_fetch_data(file);
 }
@@ -85,7 +85,7 @@ bool whapi_get_wallpapers_from_collection_raw_to_file(const char *user_name,
     assert(whapi.initialized);
 
     CHECKB_RETURN(setup_wallpaper_from_collection_url(user_name, id, purity),
-                  false);
+                  false, (void)0);
 
     return setup_and_fetch_data(file);
 }

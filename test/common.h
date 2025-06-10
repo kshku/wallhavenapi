@@ -50,7 +50,8 @@ static const char *wallhaven_error_code_string(WallhavenErrorCode code) {
 #define TEST(x, task, ...)                                          \
     do {                                                            \
         if (!(x)) {                                                 \
-            unsigned int code, type;                                \
+            unsigned int code;                                      \
+            ErrorCodeType type;                                     \
             whapi_get_last_error_code(&code, &type);                \
             printf("Failed \"" task "\"\n", ##__VA_ARGS__);         \
             printf("Error type: %u, Error code: %u\n", code, type); \
@@ -127,14 +128,14 @@ static const char *test_user_name = "SOME_USER";
 static const size_t test_user_collection_id =
     0;  // Id of one of that user's collection
 
-#ifdef WH_WINDOWS
+#ifdef WH_OS_WINDOWS
     #include <windows.h>
 #else
     #include <unistd.h>
 #endif
 
 static void sleep_ms(int milliseconds) {
-#ifdef WH_WINDOWS
+#ifdef WH_OS_WINDOWS
     Sleep(milliseconds);
 #else
     usleep(milliseconds * 1000);

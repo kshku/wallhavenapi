@@ -19,7 +19,7 @@ typedef struct KeyStrVar {
 typedef struct KeyNumVar {
         const char *key;
 
-        enum { UNSIGNED_INT, SIZE_T } type; /**< Type of the number */
+        enum { UNSIGNED_INT_TYPE, SIZE_T_TYPE } type; /**< Type of the number */
 
         union {
                 unsigned int *puint;
@@ -85,15 +85,19 @@ bool parse_wallpaper_info(cJSON *json, Wallpaper *wallpaper,
         false, whapi_destroy_wallpaper(wallpaper));
 
     KeyNumVar keynumvars[] = {
-        {      .key = "views",.psize_t = &wallpaper->views,.type = SIZE_T                                                                },
-        {  .key = "favorites", .psize_t = &wallpaper->favorites, .type = SIZE_T},
+        {      .key = "views",.psize_t = &wallpaper->views,.type = SIZE_T_TYPE              },
+        {  .key = "favorites",
+         .psize_t = &wallpaper->favorites,
+         .type = SIZE_T_TYPE      },
         {.key = "dimension_x",
          .puint = &wallpaper->resolution.width,
-         .type = UNSIGNED_INT                                                  },
+         .type = UNSIGNED_INT_TYPE},
         {.key = "dimension_y",
          .puint = &wallpaper->resolution.height,
-         .type = UNSIGNED_INT                                                  },
-        {  .key = "file_size", .psize_t = &wallpaper->file_size, .type = SIZE_T},
+         .type = UNSIGNED_INT_TYPE},
+        {  .key = "file_size",
+         .psize_t = &wallpaper->file_size,
+         .type = SIZE_T_TYPE      },
     };
 
     CHECKB_RETURN(
@@ -144,8 +148,10 @@ bool parse_tag(cJSON *json, Tag *tag, bool no_data) {
         {.key = "created_at", .var = &tag->created_at},
     };
     KeyNumVar keynumvars[] = {
-        {         .key = "id",          .psize_t = &tag->id, .type = SIZE_T},
-        {.key = "category_id", .psize_t = &tag->category_id, .type = SIZE_T},
+        {         .key = "id",.psize_t = &tag->id,.type = SIZE_T_TYPE        },
+        {.key = "category_id",
+         .psize_t = &tag->category_id,
+         .type = SIZE_T_TYPE},
     };
 
     CHECKB_RETURN(parse_purity(data, &tag->purity), false,
@@ -195,11 +201,11 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
     KeyNumVar keynumvars[] = {
         {.key = "current_page",
          .psize_t = &search_result->current_page,
-         .type = SIZE_T                                                         },
+         .type = SIZE_T_TYPE                                                         },
         {   .key = "last_page",
          .psize_t = &search_result->last_page,
-         .type = SIZE_T                                                         },
-        {       .key = "total", .psize_t = &search_result->total, .type = SIZE_T},
+         .type = SIZE_T_TYPE                                                         },
+        {       .key = "total", .psize_t = &search_result->total, .type = SIZE_T_TYPE},
     };
 
     CHECKB_RETURN(
@@ -227,8 +233,9 @@ bool parse_search_result(cJSON *json, SearchResult *search_result,
             CHECKB_RETURN(cJSON_IsObject(query), false,
                           whapi_destroy_search_result(search_result));
 
-            KeyNumVar id = {
-                .key = "id", .psize_t = &search_result->id, .type = SIZE_T};
+            KeyNumVar id = {.key = "id",
+                            .psize_t = &search_result->id,
+                            .type = SIZE_T_TYPE};
             KeyStrVar tag = {.key = "tag", .var = &search_result->tag};
             CHECKB_RETURN(parse_key_num_vars(query, &id, 1), false,
                           whapi_destroy_search_result(search_result));
@@ -330,7 +337,7 @@ static bool parse_key_string_vars(cJSON *json, KeyStrVar *keystrvars,
 
         CHECKB_RETURN((cJSON_IsString(item) && (item->valuestring != NULL))
                           || cJSON_IsNull(item),
-                      false);
+                      false, (void)0);
 
         *keystrvars[i].var = cJSON_IsString(item) ? item->valuestring : NULL;
     }
@@ -342,9 +349,9 @@ static bool parse_key_num_vars(cJSON *json, KeyNumVar *keynumvars, size_t len) {
     for (size_t i = 0; i < len; ++i) {
         cJSON *item = cJSON_GetObjectItemCaseSensitive(json, keynumvars[i].key);
 
-        CHECKB_RETURN(cJSON_IsNumber(item), false);
+        CHECKB_RETURN(cJSON_IsNumber(item), false, (void)0);
 
-        if (keynumvars[i].type == UNSIGNED_INT)
+        if (keynumvars[i].type == UNSIGNED_INT_TYPE)
             *keynumvars[i].puint = (unsigned int)item->valueint;
         else *keynumvars[i].psize_t = (size_t)item->valuedouble;
     }
@@ -355,7 +362,7 @@ static bool parse_key_num_vars(cJSON *json, KeyNumVar *keynumvars, size_t len) {
 static bool parse_uploader(cJSON *json, User *uploader) {
     cJSON *up = cJSON_GetObjectItemCaseSensitive(json, "uploader");
 
-    CHECKB_RETURN(cJSON_IsObject(up), false);
+    CHECKB_RETURN(cJSON_IsObject(up), false, (void)0);
 
     KeyStrVar keystrvars[] = {
         {.key = "username", .var = &uploader->user_name},
@@ -372,16 +379,16 @@ static bool parse_uploader(cJSON *json, User *uploader) {
     CHECKB_RETURN(
         parse_key_string_vars(up, keystrvars,
                               (sizeof(keystrvars) / sizeof(keystrvars[0]))),
-        false);
+        false, (void)0);
 
     cJSON *avatar = cJSON_GetObjectItemCaseSensitive(up, "avatar");
 
-    CHECKB_RETURN(cJSON_IsObject(avatar), false);
+    CHECKB_RETURN(cJSON_IsObject(avatar), false, (void)0);
 
     CHECKB_RETURN(
         parse_key_string_vars(avatar, keystrvars2,
                               (sizeof(keystrvars2) / sizeof(keystrvars2[0]))),
-        false);
+        false, (void)0);
 
     return true;
 }
@@ -389,7 +396,8 @@ static bool parse_uploader(cJSON *json, User *uploader) {
 static bool parse_ratio(cJSON *json, float *ratio) {
     cJSON *sratio = cJSON_GetObjectItemCaseSensitive(json, "ratio");
 
-    CHECKB_RETURN(cJSON_IsString(sratio) && sratio->valuestring != NULL, false);
+    CHECKB_RETURN(cJSON_IsString(sratio) && sratio->valuestring != NULL, false,
+                  (void)0);
 
     sscanf(sratio->valuestring, "%f", ratio);
 
@@ -398,16 +406,16 @@ static bool parse_ratio(cJSON *json, float *ratio) {
 
 static bool parse_colors(cJSON *json, Color **colors, size_t *color_count) {
     cJSON *clrs = cJSON_GetObjectItemCaseSensitive(json, "colors");
-    CHECKB_RETURN(cJSON_IsArray(clrs), false);
+    CHECKB_RETURN(cJSON_IsArray(clrs), false, (void)0);
     *color_count = cJSON_GetArraySize(clrs);
 
     *colors = (Color *)malloc(sizeof(Color) * (*color_count));
-    CHECKP_RETURN(*colors, false);
+    CHECKP_RETURN(*colors, false, (void)0);
     cJSON *color;
     size_t i = 0;
     cJSON_ArrayForEach(color, clrs) {
         CHECKB_RETURN(cJSON_IsString(color) && color->valuestring != NULL,
-                      false);
+                      false, (void)0);
         sscanf(color->valuestring, "#%06x", (unsigned int *)(&((*colors)[i])));
         ++i;
     }
@@ -418,7 +426,8 @@ static bool parse_colors(cJSON *json, Color **colors, size_t *color_count) {
 static bool parse_purity(cJSON *json, Purity *purity) {
     cJSON *pty = cJSON_GetObjectItemCaseSensitive(json, "purity");
 
-    CHECKB_RETURN(cJSON_IsString(pty) && pty->valuestring != NULL, false);
+    CHECKB_RETURN(cJSON_IsString(pty) && pty->valuestring != NULL, false,
+                  (void)0);
 
     if (!strncmp(pty->valuestring, "sfw", 3)) *purity = PURITY_SFW;
     else if (!strncmp(pty->valuestring, "nsfw", 4)) *purity = PURITY_NSFW;
@@ -430,7 +439,8 @@ static bool parse_purity(cJSON *json, Purity *purity) {
 static bool parse_category(cJSON *json, Category *category) {
     cJSON *ctg = cJSON_GetObjectItemCaseSensitive(json, "category");
 
-    CHECKB_RETURN(cJSON_IsString(ctg) && ctg->valuestring != NULL, false);
+    CHECKB_RETURN(cJSON_IsString(ctg) && ctg->valuestring != NULL, false,
+                  (void)0);
 
     if (!strncmp(ctg->valuestring, "anime", 5)) *category = CATEGORY_ANIME;
     else if (!strncmp(ctg->valuestring, "people", 6))
@@ -444,7 +454,7 @@ static bool parse_image_type(cJSON *json, ImageType *type) {
     cJSON *image_type = cJSON_GetObjectItemCaseSensitive(json, "file_type");
 
     CHECKB_RETURN(cJSON_IsString(image_type) && image_type->valuestring != NULL,
-                  false);
+                  false, (void)0);
 
     if (!strncmp(image_type->valuestring, "image/png", 9))
         *type = IMAGE_TYPE_PNG;
@@ -455,16 +465,16 @@ static bool parse_image_type(cJSON *json, ImageType *type) {
 
 static bool parse_tags(cJSON *json, Tag **tags, size_t *tag_count) {
     cJSON *tgs = cJSON_GetObjectItemCaseSensitive(json, "tags");
-    CHECKB_RETURN(cJSON_IsArray(tgs), false);
+    CHECKB_RETURN(cJSON_IsArray(tgs), false, (void)0);
     *tag_count = cJSON_GetArraySize(tgs);
 
     *tags = (Tag *)calloc((*tag_count), sizeof(Tag));
-    CHECKP_RETURN(*tags, false);
+    CHECKP_RETURN(*tags, false, (void)0);
     size_t i = 0;
     cJSON *tag;
     cJSON_ArrayForEach(tag, tgs) {
-        CHECKB_RETURN(cJSON_IsObject(tag), false);
-        CHECKB_RETURN(parse_tag(tag, &((*tags)[i]), true), false);
+        CHECKB_RETURN(cJSON_IsObject(tag), false, (void)0);
+        CHECKB_RETURN(parse_tag(tag, &((*tags)[i]), true), false, (void)0);
         ++i;
     }
 
@@ -473,31 +483,31 @@ static bool parse_tags(cJSON *json, Tag **tags, size_t *tag_count) {
 
 static bool parse_thumbs(cJSON *json, Thumbs *thumbs) {
     cJSON *tms = cJSON_GetObjectItemCaseSensitive(json, "thumbs");
-    CHECKB_RETURN(cJSON_IsObject(tms), false);
+    CHECKB_RETURN(cJSON_IsObject(tms), false, (void)0);
 
     KeyStrVar keystrvars[] = {
-        {   .key = "large",    .var = &thumbs->large},
-        {.key = "original", .var = &thumbs->original},
-        {   .key = "small",    .var = &thumbs->small},
+        {   .key = "large",    .var = &thumbs->large_size},
+        {.key = "original", .var = &thumbs->original_size},
+        {   .key = "small",    .var = &thumbs->small_size},
     };
 
     CHECKB_RETURN(
         parse_key_string_vars(tms, keystrvars,
                               (sizeof(keystrvars) / sizeof(keystrvars[0]))),
-        false);
+        false, (void)0);
 
     return true;
 }
 
 static bool parse_purities(cJSON *json, unsigned int *purity) {
     cJSON *pty = cJSON_GetObjectItemCaseSensitive(json, "purity");
-    CHECKB_RETURN(cJSON_IsArray(pty), false);
+    CHECKB_RETURN(cJSON_IsArray(pty), false, (void)0);
 
     *purity = PURITY_NONE;
 
     cJSON *p;
     cJSON_ArrayForEach(p, pty) {
-        CHECKB_RETURN(cJSON_IsString(p), false);
+        CHECKB_RETURN(cJSON_IsString(p), false, (void)0);
 
         if ((!((*purity) & PURITY_SFW)) && (!strncmp(p->valuestring, "sfw", 3)))
             *purity |= PURITY_SFW;
@@ -512,13 +522,13 @@ static bool parse_purities(cJSON *json, unsigned int *purity) {
 
 static bool parse_categories(cJSON *json, unsigned int *categories) {
     cJSON *ctg = cJSON_GetObjectItemCaseSensitive(json, "categories");
-    CHECKB_RETURN(cJSON_IsArray(ctg), false);
+    CHECKB_RETURN(cJSON_IsArray(ctg), false, (void)0);
 
     *categories = CATEGORY_NONE;
 
     cJSON *c;
     cJSON_ArrayForEach(c, ctg) {
-        CHECKB_RETURN(cJSON_IsString(c), false);
+        CHECKB_RETURN(cJSON_IsString(c), false, (void)0);
 
         if ((!((*categories) & CATEGORY_ANIME))
             && (!strncmp(c->valuestring, "anime", 5)))
@@ -534,7 +544,7 @@ static bool parse_categories(cJSON *json, unsigned int *categories) {
 
 static bool parse_toprange(cJSON *json, TopRange *toprange) {
     cJSON *tr = cJSON_GetObjectItem(json, "toplist_range");
-    CHECKB_RETURN(cJSON_IsString(tr), false);
+    CHECKB_RETURN(cJSON_IsString(tr), false, (void)0);
 
     *toprange = TOPRANGE_NONE;
 
@@ -582,7 +592,7 @@ static bool parse_toprange(cJSON *json, TopRange *toprange) {
 static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
                                         size_t *count, const char *name) {
     cJSON *items = cJSON_GetObjectItem(json, name);
-    CHECKB_RETURN(cJSON_IsArray(items), false);
+    CHECKB_RETURN(cJSON_IsArray(items), false, (void)0);
     *count = cJSON_GetArraySize(items);
 
     *rrs = (Resolution *)calloc((*count), sizeof(Resolution));
@@ -590,7 +600,8 @@ static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
     size_t i = 0;
     cJSON *item;
     cJSON_ArrayForEach(item, items) {
-        CHECKB_RETURN(cJSON_IsString(item) && item->valuestring != NULL, false);
+        CHECKB_RETURN(cJSON_IsString(item) && item->valuestring != NULL, false,
+                      (void)0);
         sscanf(item->valuestring, "%ux%u", &((*rrs)[i]).width,
                &((*rrs)[i]).height);
         ++i;
@@ -602,7 +613,7 @@ static bool parse_resolutions_or_ratios(cJSON *json, Resolution **rrs,
 static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
                           const char *name) {
     cJSON *items = cJSON_GetObjectItem(json, name);
-    CHECKB_RETURN(cJSON_IsArray(items), false);
+    CHECKB_RETURN(cJSON_IsArray(items), false, (void)0);
     *count = cJSON_GetArraySize(items);
 
     *strings = (const char **)malloc((*count) * sizeof(const char *));
@@ -610,7 +621,7 @@ static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
     size_t i = 0;
     cJSON *item;
     cJSON_ArrayForEach(item, items) {
-        CHECKB_RETURN(cJSON_IsString(item), false);
+        CHECKB_RETURN(cJSON_IsString(item), false, (void)0);
         (*strings)[i] = item->valuestring;
         ++i;
     }
@@ -619,25 +630,25 @@ static bool parse_strings(cJSON *json, const char ***strings, size_t *count,
 }
 
 static bool parse_collection(cJSON *json, Collection *collection) {
-    CHECKB_RETURN(cJSON_IsObject(json), false);
+    CHECKB_RETURN(cJSON_IsObject(json), false, (void)0);
 
     unsigned int public;
     KeyNumVar keynumvars[] = {
-        {    .key = "id",    .psize_t = &collection->id,       .type = SIZE_T},
-        { .key = "views", .psize_t = &collection->views,       .type = SIZE_T},
-        {.key = "public",              .puint = &public, .type = UNSIGNED_INT},
-        { .key = "count", .psize_t = &collection->count,       .type = SIZE_T},
+        {    .key = "id",    .psize_t = &collection->id,       .type = SIZE_T_TYPE},
+        { .key = "views", .psize_t = &collection->views,       .type = SIZE_T_TYPE},
+        {.key = "public",              .puint = &public, .type = UNSIGNED_INT_TYPE},
+        { .key = "count", .psize_t = &collection->count,       .type = SIZE_T_TYPE},
     };
 
     CHECKB_RETURN(
         parse_key_num_vars(json, keynumvars,
                            (sizeof(keynumvars) / sizeof(keynumvars[0]))),
-        false);
+        false, (void)0);
 
     collection->public = (bool)public;
 
     KeyStrVar label = {.key = "label", .var = &collection->label};
-    CHECKB_RETURN(parse_key_string_vars(json, &label, 1), false);
+    CHECKB_RETURN(parse_key_string_vars(json, &label, 1), false, (void)0);
 
     return true;
 }

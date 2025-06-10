@@ -51,4 +51,6 @@ int test_raw_to_file(const char *user, const char *apikey) {
     }
 
     whapi_shutdown();
+
+    return 0;
 }

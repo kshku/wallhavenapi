@@ -41,4 +41,6 @@ int test_raw(const char *user, const char *apikey) {
     whstr_destroy(&res);
 
     whapi_shutdown();
+
+    return 0;
 }

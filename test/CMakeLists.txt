@@ -11,3 +11,12 @@ add_executable(whapitest)
 target_sources(whapitest PRIVATE ${SRCS})
 
 target_link_libraries(whapitest PRIVATE whapi_shared)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    add_custom_target(copy_dlls ALL
+        COMMENT "Copying dlls"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_RUNTIME_DLLS:whapitest>" "$<TARGET_FILE_DIR:whapitest>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_RUNTIME_DLL_DIRS:whapitest>/zlibd1.dll" "$<TARGET_FILE_DIR:whapitest>"
+        COMMAND_EXPAND_LISTS
+    )
+endif()
