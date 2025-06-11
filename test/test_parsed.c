@@ -58,6 +58,19 @@ void print_search_result(SearchResult *search_result) {
     for (size_t i = 0; i < search_result->wallpaper_count; ++i) {
         printf("wallpaper[%zu]:\n", i);
         print_wallpaper(&search_result->wallpapers[i]);
+        printf("Downloading %s\n", search_result->wallpapers[i].path);
+        if (
+#ifdef WH_OS_WINDOWS
+            whapi_download_wallpaper(&search_result->wallpapers[i],
+                                     "..\\Downloads")
+#else
+            whapi_download_wallpaper(&search_result->wallpapers[i],
+                                     "../Downloads")
+#endif
+        )
+            printf("Done!\n");
+        else printf("Something went wrong!\n");
+        printf("\n");
     }
 
     printf("current_page: \"%zu\"\n", search_result->current_page);
@@ -138,7 +151,7 @@ int test_parsed(const char *user, const char *apikey) {
 
     whapi_set_response_code_handler(handler);
 
-    for (int i = 0; i < 2; ++i) {
+    for (int k = 0; k < 2; ++k) {
         Wallpaper wallpaper;
         TEST(whapi_get_wallpaper_info(wallid, &wallpaper),
              "test wallpaper info parsed");

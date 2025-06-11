@@ -273,3 +273,17 @@ WH_API void whapi_destroy_search_result(SearchResult *search_result);
  * @param collections Pointer to the collections
  */
 WH_API void whapi_destroy_collections(Collections *collections);
+
+/**
+ * @brief Install the wallpaper into given directory.
+ *
+ * Installs the wallpaper in the given directory.
+ *
+ * @note A slash will be added so don't include the slash in the end.
+ *
+ * @param wallpaper Pointer to Wallpaper
+ * @param dir Directory to install
+ *
+ * @return Returns true on success.
+ */
+WH_API bool whapi_download_wallpaper(Wallpaper *wallpaper, const char *dir);

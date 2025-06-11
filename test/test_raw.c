@@ -10,7 +10,7 @@ int test_raw(const char *user, const char *apikey) {
 
     whStr res = whstr_create();
 
-    for (int i = 0; i < 2; ++i) {
+    for (int k = 0; k < 2; ++k) {
         TEST(whapi_get_wallpaper_info_raw(wallid, &res),
              "test wallpaper info raw");
 

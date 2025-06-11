@@ -1,6 +1,7 @@
 #include "whapi/whparsed.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "cJSON.h"
 #include "parse_funcs.h"
@@ -187,4 +188,90 @@ void whapi_destroy_collections(Collections *collections) {
     if (collections->json) cJSON_Delete(collections->json);
 
     *collections = (Collections){0};
+}
+
+static size_t write_to_file(void *buffer, size_t size, size_t nmemb,
+                            void *userp) {
+    FILE *fp = (FILE *)userp;
+    return fwrite(buffer, size, nmemb, fp);
+}
+
+static const char *get_file_name(const char *path) {
+    const char *slash = strrchr(path, '/');
+#ifdef WH_OS_WINDOWS
+    const char *backslash = strrchr(path, '\\');
+    if (!slash || (backslash && backslash > slash)) slash = backslash;
+
+#endif
+    return slash ? slash + 1 : path;
+}
+
+bool whapi_download_wallpaper(Wallpaper *wallpaper, const char *dir) {
+#ifdef WH_DEBUG
+    static int count = 0;
+    printf("Count = %d\n", ++count);
+#endif
+    if (!wallpaper->path) {
+        whapi.error_code = WALLHAVEN_INVALID_WALLPAPER,
+        whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+#ifdef WH_DEBUG
+        printf("No path!\n");
+#endif
+        return false;
+    }
+
+    whStr file_name = whstr_create();
+
+#ifdef WH_OS_WINDOWS
+    CHECKB_RETURN(
+        whstr_setf(&file_name, "%s\\%s", dir, get_file_name(wallpaper->path)),
+        false, whstr_destroy(&file_name));
+#else
+    CHECKB_RETURN(
+        whstr_setf(&file_name, "%s/%s", dir, get_file_name(wallpaper->path)),
+        false, whstr_destroy(&file_name));
+#endif
+
+#ifdef WH_DEBUG
+    printf("Filepath: %s\n", file_name.str);
+#endif
+
+    CHECK_RETURN(
+        whapi.error_code = curl_url_set(whapi.url, CURLUPART_URL,
+                                        wallpaper->path, CURLU_URLENCODE),
+        false, whapi.error_code_type = ERROR_CODE_TYPE_URL;
+        whstr_destroy(&file_name));
+
+    CHECK_RETURN(whapi.error_code =
+                     curl_easy_setopt(whapi.curl, CURLOPT_CURLU, whapi.url),
+                 false, whapi.error_code_type = ERROR_CODE_TYPE_CURL;
+                 whstr_destroy(&file_name));
+
+    CHECK_RETURN(whapi.error_code = curl_easy_setopt(
+                     whapi.curl, CURLOPT_WRITEFUNCTION, write_to_file),
+                 false, whapi.error_code_type = ERROR_CODE_TYPE_CURL;
+                 whstr_destroy(&file_name));
+
+    do {
+        FILE *file = fopen(file_name.str, "wb");
+
+        CHECKP_RETURN(file, false,
+                      whapi.error_code = WALLHAVEN_OPEN_FILE_FAILED,
+                      whapi.error_code_type = ERROR_CODE_TYPE_WALLHAVEN;
+                      whstr_destroy(&file_name));
+
+        CHECK_RETURN(whapi.error_code = curl_easy_setopt(
+                         whapi.curl, CURLOPT_WRITEDATA, (void *)file),
+                     false, whapi.error_code_type = ERROR_CODE_TYPE_CURL;
+                     whstr_destroy(&file_name));
+
+        CHECKB_RETURN(perform_call(), false, fclose(file);
+                      whstr_destroy(&file_name));
+
+        fclose(file);
+    } while (whapi.retry);
+
+    whstr_destroy(&file_name);
+
+    return true;
 }

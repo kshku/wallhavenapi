@@ -12,7 +12,7 @@ target_sources(whapitest PRIVATE ${SRCS})
 
 target_link_libraries(whapitest PRIVATE whapi)
 
-target_include_directories(whapitest PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_include_directories(whapitest PRIVATE "${PROJECT_SOURCE_DIR}/include")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_target(copy_dlls ALL
@@ -22,3 +22,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         COMMAND_EXPAND_LISTS
     )
 endif()
+
+add_custom_target(create_downloads_directory ALL
+    COMMENT "Creating Downloads directory under build"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/Downloads"
+)

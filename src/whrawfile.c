@@ -29,7 +29,7 @@ static bool setup_and_fetch_data(const char *filename) {
                          whapi.curl, CURLOPT_WRITEDATA, (void *)file),
                      false, whapi.error_code_type = ERROR_CODE_TYPE_CURL);
 
-        CHECKB_RETURN(perform_call(), false, (void)0);
+        CHECKB_RETURN(perform_call(), false, fclose(file));
 
         fclose(file);
     } while (whapi.retry);

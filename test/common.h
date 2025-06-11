@@ -41,6 +41,8 @@ static const char *wallhaven_error_code_string(WallhavenErrorCode code) {
             return STRINGIFY(WALLHAVEN_UNKNOWN_ERROR);
         case WALLHAVEN_BAD_REQUEST:
             return STRINGIFY(WALLHAVEN_BAD_REQUEST);
+        case WALLHAVEN_INVALID_WALLPAPER:
+            return STRINGIFY(WALLHAVEN_INVALID_WALLPAPER);
         default:
             break;
     }
@@ -145,7 +147,7 @@ static void sleep_ms(int milliseconds) {
 static bool handler(unsigned int response) {
     printf("Response code: %u\n", response);
     if (response == 429) {
-        // sleep 15 seconds
+        printf("Sleeping for 15 seconds\n");
         sleep_ms(1000 * 15);
         return true;
     }

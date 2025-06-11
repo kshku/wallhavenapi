@@ -28,7 +28,7 @@
             #error "Should not reach here"
         #endif
     #else
-        #if defined(WH_OS_LINUX)
+        #if defined(WH_OS_LINUX) || defined(WH_OS_MAC)
             #define WH_API
         #elif defined(WH_OS_WINDOWS)
             #define WH_API __declspec(dllimport)
@@ -72,6 +72,7 @@ typedef enum WallhavenErrorCode {
     WALLHAVEN_API_CALL_LIMIT_EXCEED, /**< API call limit exceeded response */
     WALLHAVEN_BAD_REQUEST, /**< Bad request response */
     WALLHAVEN_UNKNOWN_ERROR, /**< Unknown error */
+    WALLHAVEN_INVALID_WALLPAPER, /**< Invalid wallpaper is given to install */
 } WallhavenErrorCode;
 
 /**

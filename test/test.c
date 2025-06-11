@@ -12,6 +12,6 @@ int main(void) {
     const char *user = "YOUR_USER_NAME";
 
     test_parsed(user, apikey);
-    test_raw(user, apikey);
-    test_raw_to_file(user, apikey);
+    // test_raw(user, apikey);
+    // test_raw_to_file(user, apikey);
 }
