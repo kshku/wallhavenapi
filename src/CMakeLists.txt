@@ -1,11 +1,11 @@
 set(HEADERS
-    "${CMAKE_SOURCE_DIR}/include/whapi/whapi.h"
-    "${CMAKE_SOURCE_DIR}/include/whapi/whdef.h"
-    "${CMAKE_SOURCE_DIR}/include/whapi/whstr.h"
-    "${CMAKE_SOURCE_DIR}/include/whapi/whparsed.h"
-    "${CMAKE_SOURCE_DIR}/include/whapi/whraw.h"
-    "${CMAKE_SOURCE_DIR}/include/whapi/whrawfile.h"
-    "${CMAKE_SOURCE_DIR}/include/whapi/whcore.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whapi.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whdef.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whstr.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whparsed.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whraw.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whrawfile.h"
+    "${PROJECT_SOURCE_DIR}/include/whapi/whcore.h"
 )
 
 set(SRCS
@@ -22,27 +22,51 @@ set(SRCS
     parse_funcs.c
 )
 
-add_library(whapi_static STATIC)
-set_target_properties(whapi_static PROPERTIES OUTPUT_NAME "whapi")
-target_compile_definitions(whapi_static PRIVATE _CRT_SECURE_NO_WARNINGS)
+if(WHAPI_BUILD_STATIC)
+    add_library(whapi STATIC)
+    target_compile_definitions(whapi PRIVATE WH_STATIC)
+else()
+    add_library(whapi SHARED)
+    target_compile_definitions(whapi PRIVATE WH_EXPORT)
+    set_target_properties(whapi PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+endif()
 
-add_library(whapi_shared SHARED)
-set_target_properties(whapi_shared PROPERTIES OUTPUT_NAME "whapi")
-target_compile_definitions(whapi_shared PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_include_directories(whapi
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+)
 
-target_compile_definitions(whapi_static PRIVATE WH_STATIC)
-target_compile_definitions(whapi_shared PRIVATE WH_EXPORT)
+target_link_libraries(whapi PRIVATE whapi_flags)
 
-target_include_directories(whapi_static PUBLIC "${CMAKE_SOURCE_DIR}/include")
-target_include_directories(whapi_shared PUBLIC "${CMAKE_SOURCE_DIR}/include")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_compile_definitions(whapi PRIVATE _CRT_SECURE_NO_WARNINGS)
 
-target_link_libraries(whapi_static PRIVATE whapi_flags)
-target_link_libraries(whapi_shared PRIVATE whapi_flags)
+    find_package(CURL CONFIG REQUIRED)
 
-find_package(CURL CONFIG REQUIRED)
+    target_link_libraries(whapi PRIVATE CURL::libcurl)
+else()
+    target_link_libraries(whapi PRIVATE curl)
+endif()
 
-target_link_libraries(whapi_static PRIVATE CURL::libcurl)
-target_link_libraries(whapi_shared PRIVATE CURL::libcurl)
+target_sources(whapi PRIVATE ${HEADERS} ${SRCS})
 
-target_sources(whapi_static PRIVATE ${HEADERS} ${SRCS})
-target_sources(whapi_shared PRIVATE ${HEADERS} ${SRCS})
+install(TARGETS whapi
+    EXPORT whapiTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/include/whapi
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+
+install(EXPORT whapiTargets
+    FILE whapiTargets.cmake
+    NAMESPACE whapi::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/whapi
+)

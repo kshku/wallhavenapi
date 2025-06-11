@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15...3.31)
 
-project(wallhavenapi VERSION 0.1.0 DESCRIPTION "Wallhaven API client library in C")
+project(wallhavenapi VERSION 1.0.0 DESCRIPTION "Wallhaven API client library in C" LANGUAGES C)
 
 add_library(whapi_flags INTERFACE)
 
@@ -24,6 +24,42 @@ target_compile_definitions(whapi_flags
 
 target_compile_options(whapi_flags INTERFACE "$<${gcc_clang}:-fvisibility=hidden>")
 
+include(GNUInstallDirs)
+
+option(WHAPI_BUILD_STATIC "Build static library" OFF)
+
 add_subdirectory(src)
 add_subdirectory("test")
 add_subdirectory(docs)
+
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/whapiConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/whapiConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/whapiConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/whapi
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/whapiConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/whapiConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/whapi
+)
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/whapi.pc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/whapi.pc
+        @ONLY
+    )
+
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/whapi.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+endif()

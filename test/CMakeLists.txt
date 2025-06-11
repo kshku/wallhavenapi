@@ -10,7 +10,9 @@ add_executable(whapitest)
 
 target_sources(whapitest PRIVATE ${SRCS})
 
-target_link_libraries(whapitest PRIVATE whapi_shared)
+target_link_libraries(whapitest PRIVATE whapi)
+
+target_include_directories(whapitest PRIVATE "${CMAKE_SOURCE_DIR}/include")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_target(copy_dlls ALL
