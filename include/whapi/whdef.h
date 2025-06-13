@@ -235,5 +235,5 @@ typedef struct SearchParameters {
         size_t color_count; /**< Number of colors */
         const Color *colors; /**< Array of colors */
         size_t page; /**< Page number */
-        const char seed[7]; /** Seed */
+        char seed[7]; /** Seed */
 } SearchParameters;

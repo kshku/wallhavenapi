@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15...3.31)
 
-project(wallhavenapi VERSION 1.1.0 DESCRIPTION "Wallhaven API client library in C" LANGUAGES C)
+project(wallhavenapi VERSION 1.1.1 DESCRIPTION "Wallhaven API client library in C" LANGUAGES C)
 
 add_library(whapi_flags INTERFACE)
 
